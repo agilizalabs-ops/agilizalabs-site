@@ -10,7 +10,7 @@ export const site = {
   regiao: 'São Bento do Sul, Rio Negrinho, Campo Alegre e região',
   instagram: 'agilizalabs',
   // Com o e-mail vazio, os links de e-mail somem do site.
-  email: 'agilizalabs@gmail.com',
+  email: 'contato@agilizalabs.com.br',
   cnpj: '59.816.068/0001-96',
   horario: 'Segunda a sexta, das 8h às 18h',
   fundadores: { total: 6, preenchidas: 0, prazo: '15/12/2026' },
