@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { site, linkWhatsApp } from '../config';
+---
+
+<Layout title="Política de privacidade | Agiliza Labs" description="Como a Agiliza Labs trata os seus dados, de acordo com a LGPD.">
+  <article class="conteudo max-w-3xl py-16 [&_h2]:mt-10 [&_h2]:text-2xl [&_p]:mt-3 [&_p]:text-grafite [&_li]:text-grafite [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
+    <h1 class="text-4xl sm:text-5xl">Política de privacidade</h1>
+    <p>Atualizada em 29/10/2026.</p>
+
+    <h2>Quem somos</h2>
+    <p>
+      {site.nome}{site.cnpj && `, CNPJ ${site.cnpj}`}, com sede em {site.cidade} - {site.uf}. Para qualquer assunto sobre os seus dados, fale com a gente pelo <a class="text-tinta underline" href={linkWhatsApp('Oi! Tenho uma dúvida sobre os meus dados.')}>WhatsApp</a>{site.email && <> ou pelo e-mail <a class="text-tinta underline" href={`mailto:${site.email}`}>{site.email}</a></>}.
+    </p>
+
+    <h2>O que este site coleta</h2>
+    <p>Este site não usa cookies de rastreamento nem formulários. Ele funciona como uma vitrine: quando você clica em um botão de WhatsApp, a conversa acontece no aplicativo do WhatsApp, sob a política de privacidade dele.</p>
+
+    <h2>O que coletamos quando você fala com a gente</h2>
+    <ul>
+      <li>Nome, telefone e o que você escrever na conversa, para responder e preparar a proposta.</li>
+      <li>Dados do seu negócio que você compartilhar, para entender o projeto.</li>
+    </ul>
+    <p>Usamos esses dados só para atender o seu pedido e, se você virar cliente, para cumprir o contrato e emitir notas fiscais. Não vendemos nem compartilhamos com terceiros para publicidade.</p>
+
+    <h2>Por quanto tempo guardamos</h2>
+    <p>Enquanto houver conversa ou contrato ativo, e depois pelo prazo exigido por lei para documentos fiscais. Você pode pedir a exclusão a qualquer momento, quando não houver obrigação legal de guarda.</p>
+
+    <h2>Seus direitos</h2>
+    <p>Pela Lei Geral de Proteção de Dados (Lei 13.709/2018), você pode pedir para confirmar se tratamos os seus dados, acessar, corrigir, apagar ou levar os seus dados, e revogar consentimentos. Basta pedir pelo WhatsApp{site.email && ` ou pelo e-mail ${site.email}`}.</p>
+
+    <h2>Se você não quiser mais receber mensagens</h2>
+    <p>Responda "não quero receber" em qualquer conversa e paramos na hora.</p>
+  </article>
+</Layout>

@@ -1,0 +1,462 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ChatDemo from '../components/ChatDemo.astro';
+import { site, linkWhatsApp, projetos } from '../config';
+
+const brl = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
+
+const dores = [
+  {
+    fala: 'Respondo o WhatsApp à noite, depois de atender o dia inteiro.',
+    custo: 'Quem não recebe resposta em minutos marca com o concorrente.',
+  },
+  {
+    fala: 'A agenda fica no caderno, e às vezes marco dois clientes no mesmo horário.',
+    custo: 'Horário duplicado vira cliente irritado e avaliação ruim no Google.',
+  },
+  {
+    fala: 'Me procuram no Google e não acham nada, ou acham um site que não abre.',
+    custo: 'Quem pesquisa o seu serviço na cidade nem fica sabendo que você existe.',
+  },
+  {
+    fala: 'O cliente marca e não aparece.',
+    custo: 'Um lembrete automático na véspera evita boa parte das faltas.',
+  },
+];
+
+const servicos = [
+  {
+    titulo: 'Sites personalizados',
+    texto: 'Rápido no celular, com botão de WhatsApp, seus serviços e preços, e tudo o que o Google precisa para te mostrar na busca da sua cidade.',
+    para: 'Para quem precisa ser encontrado e passar confiança.',
+    icone: 'M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Z',
+  },
+  {
+    titulo: 'Apps para iOS e Android',
+    texto: 'Aplicativo com a sua marca para agendamento, pedidos, cartão fidelidade ou área do cliente, publicado na App Store e no Google Play.',
+    para: 'Para quem tem cliente que volta toda semana.',
+    icone: 'M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5ZM11 18.5h2',
+  },
+  {
+    titulo: 'Sistemas sob medida',
+    texto: 'Controle de pedidos, estoque, agenda da equipe, orçamentos e atendimento automático no WhatsApp, do jeito que o seu negócio já funciona.',
+    para: 'Para quem cresceu e a planilha não dá mais conta.',
+    icone: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 16.5h7M16.5 13v7',
+  },
+];
+
+const passos = [
+  { quando: 'Dia 1', titulo: 'Conversa de 15 minutos', texto: 'Pelo WhatsApp ou pessoalmente. Você conta como o negócio funciona e onde trava.' },
+  { quando: 'Até 24 horas depois', titulo: 'Proposta com preço fechado', texto: 'Uma página com o que vamos fazer, o prazo, o valor e a conta de quanto isso te devolve.' },
+  { quando: 'Em poucos dias', titulo: 'Prévia para você aprovar', texto: 'Você vê funcionando antes de pagar o restante. Não gostou, não paga a segunda parte do setup.' },
+  { quando: 'Todo mês', titulo: 'No ar, com alguém cuidando', texto: 'Hospedagem, ajustes, relatório mensal e suporte pelo WhatsApp com resposta em até 4 horas úteis.' },
+];
+
+const planos = [
+  {
+    nome: 'Presença',
+    para: 'Para ser encontrado no Google e chamado no WhatsApp.',
+    mensal: 197,
+    setupCheio: 1200,
+    setupFundador: 600,
+    prazo: 'No ar em até 7 dias úteis',
+    itens: [
+      'Site de 1 página sob medida',
+      'Botão de WhatsApp com mensagem pronta e mapa',
+      'Google Perfil da Empresa criado ou otimizado',
+      'Domínio .com.br no seu nome',
+      '1 alteração por mês e relatório mensal',
+    ],
+    fora: 'Não inclui agendamento on-line nem atendimento automático.',
+  },
+  {
+    nome: 'Atendimento Automático',
+    para: 'Para quem vive de agenda e não consegue parar de atender para responder mensagem.',
+    mensal: 497,
+    setupCheio: 2500,
+    setupFundador: 1250,
+    prazo: 'No ar em até 15 dias úteis',
+    recomendado: true,
+    itens: [
+      'Tudo do Presença, com site de até 5 páginas',
+      'Agendamento ou pedidos on-line',
+      'Assistente com IA no WhatsApp que responde e pré-agenda',
+      'Lembrete automático para reduzir faltas',
+      'Painel com agendamentos e pedidos',
+      'Até 3 alterações por mês',
+    ],
+    fora: 'Inclui até 1.000 conversas por mês. Acima disso, repassamos o custo das mensagens, sem margem.',
+  },
+  {
+    nome: 'Sob Medida',
+    para: 'Para quem precisa de um app ou de um sistema do jeito do negócio.',
+    mensal: 897,
+    setupCheio: 6000,
+    aPartirDe: true,
+    prazo: 'Protótipo em até 5 dias úteis',
+    itens: [
+      'App iOS e Android ou sistema web',
+      'Pedidos, estoque, agenda de equipe, CRM ou portal do cliente',
+      'Diagnóstico dos processos antes de começar',
+      'Escopo e prazo fechados no contrato',
+    ],
+    fora: 'As contas das lojas de apps ficam no seu nome e são pagas por você.',
+  },
+];
+
+const comparacao = {
+  colunas: ['Agiliza Labs', 'Agência tradicional', 'Freelancer', 'Fazer sozinho'],
+  linhas: [
+    { item: 'Tempo para ficar no ar', valores: ['Dias', 'Costuma levar semanas ou meses', 'Varia muito', 'Quando sobrar tempo'] },
+    { item: 'Para começar', valores: [`A partir de ${brl(600)} no Programa Fundadores`, 'Setup alto', 'Barato', 'Mensalidade da plataforma'] },
+    { item: 'Depois da entrega', valores: ['Suporte mensal com prazo de resposta', 'Costuma ser cobrado à parte', 'Depende da agenda da pessoa', 'Você mesmo'] },
+    { item: 'Domínio e dados', valores: ['No seu nome', 'Varia', 'Às vezes fica no nome do freelancer', 'No seu nome'] },
+    { item: 'Atendimento automático', valores: ['Incluso no plano Atendimento', 'Geralmente um projeto à parte', 'Raro', 'Você configura e mantém'] },
+  ],
+};
+
+const duvidas = [
+  {
+    p: 'Quanto custa, no fim das contas?',
+    r: `Depende do plano, e o valor sai na primeira conversa. O Presença custa ${brl(197)} por mês mais o setup; o Atendimento Automático, ${brl(497)} por mês mais o setup. Para os ${site.fundadores.total} primeiros clientes, o setup sai pela metade.`,
+  },
+  {
+    p: 'Em quanto tempo fica pronto?',
+    r: 'Site no ar em até 7 dias úteis; com atendimento automático e agenda, até 15 dias úteis, contados a partir de quando recebemos suas fotos e informações. Se atrasarmos, o primeiro mês é por nossa conta.',
+  },
+  {
+    p: 'Tem fidelidade?',
+    r: 'Só no Programa Fundadores, que dá desconto no setup: 6 meses. Fora isso, você cancela com 30 dias de aviso.',
+  },
+  {
+    p: 'O domínio e o site ficam no meu nome?',
+    r: 'O domínio é registrado no seu nome e os dados do seu negócio são seus. Se um dia quiser sair, entregamos tudo.',
+  },
+  {
+    p: 'O assistente com IA não vai falar besteira com os meus clientes?',
+    r: 'Ele responde só o que você aprovou: preços, horários, endereço, serviços e agenda. Quando a pergunta foge disso, ele passa a conversa para você. E a gente revisa e ajusta as respostas todo mês.',
+  },
+  {
+    p: 'Dá para usar o número de WhatsApp que eu já tenho?',
+    r: 'Na maioria dos casos, sim. Usamos a API oficial do WhatsApp, que não coloca a sua conta em risco de bloqueio, e explicamos o que muda no seu número na conversa de diagnóstico.',
+  },
+  {
+    p: 'E a LGPD?',
+    r: 'Coletamos só o necessário para atender e agendar, os dados ficam em serviços seguros e o contrato define o papel de cada um. Em clínicas e consultórios, o assistente não pede nenhuma informação de saúde.',
+  },
+  {
+    p: `Vocês atendem fora de ${site.cidade}?`,
+    r: `Sim. Atendemos ${site.regiao} pessoalmente, e o resto do Brasil por videochamada e WhatsApp. Um dos projetos em andamento atende o litoral norte, de Balneário Camboriú a Bombinhas.`,
+  },
+];
+
+const { total, preenchidas, prazo } = site.fundadores;
+---
+
+<Layout
+  title={`Sites, apps e sistemas sob medida em ${site.cidade} | Agiliza Labs`}
+  description={`A Agiliza Labs cria sites, apps e sistemas sob medida para pequenos negócios de ${site.cidade} e região, com atendimento automático no WhatsApp. Prontos em dias, com suporte mensal.`}
+>
+  <!-- Hero -->
+  <section class="conteudo grid items-center gap-14 pb-20 pt-12 lg:grid-cols-[1.3fr_1fr] lg:pt-20">
+    <div>
+      <h1 class="text-[2.6rem] leading-[1.03] sm:text-6xl lg:text-[3.9rem]">
+        Seu cliente chama às 22h. O seu negócio responde e agenda na hora.
+      </h1>
+      <p class="mt-6 max-w-xl text-lg text-grafite sm:text-xl">
+        A Agiliza Labs cria sites, apps e sistemas sob medida para pequenos negócios de {site.cidade} e região. Usamos IA para colocar tudo no ar em dias, e uma mensalidade fixa cobre o cuidado depois.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        <a href={linkWhatsApp()} class="botao-principal text-lg">Quero um diagnóstico grátis</a>
+        <a href="#planos" class="botao-secundario text-lg">Ver planos e preços</a>
+      </div>
+      <ul class="mt-9 space-y-2.5 text-[0.98rem]">
+        {
+          ['Site no ar em até 7 dias úteis, com prazo no contrato', 'Domínio e dados no seu nome', 'Preço na primeira conversa, sem "depende"'].map((t) => (
+            <li class="flex items-start gap-3">
+              <svg class="mt-1 h-4 w-4 shrink-0 text-lima-escura" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 6.5" /></svg>
+              {t}
+            </li>
+          ))
+        }
+      </ul>
+      {
+        projetos.length > 0 && (
+          <p class="mt-8 border-t border-nevoa pt-5 text-[0.95rem] text-grafite">
+            Já no ar em {site.cidade}: o site e o app da Nova FM 87,5 e o portal de notícias da rádio.{' '}
+            <a href="#projetos" class="text-tinta underline decoration-lima decoration-2 underline-offset-4">Ver projetos</a>
+          </p>
+        )
+      }
+    </div>
+    <ChatDemo />
+  </section>
+
+  <!-- Dores -->
+  <section class="border-y border-nevoa bg-white/60">
+    <div class="conteudo py-20">
+      <h2 class="text-4xl sm:text-5xl">Isso acontece aí?</h2>
+      <ul class="mt-12 grid gap-x-14 gap-y-10 md:grid-cols-2">
+        {
+          dores.map((d) => (
+            <li class="border-l-4 border-lima pl-6">
+              <p class="text-xl font-medium leading-snug sm:text-2xl">“{d.fala}”</p>
+              <p class="mt-3 text-grafite">{d.custo}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-14 max-w-2xl text-lg">
+        Tudo isso tem solução simples, e não precisa custar o preço de uma agência inteira.
+      </p>
+    </div>
+  </section>
+
+  <!-- Serviços -->
+  <section id="servicos" class="conteudo py-20">
+    <div class="max-w-2xl">
+      <h2 class="text-4xl sm:text-5xl">O que a gente faz</h2>
+      <p class="mt-4 text-lg text-grafite">Três frentes com o mesmo jeito de trabalhar: sob medida, rápido e com alguém cuidando depois.</p>
+    </div>
+    <div class="mt-14 grid gap-12 md:grid-cols-3 md:gap-10">
+      {
+        servicos.map((s) => (
+          <article class="border-t-2 border-tinta pt-6">
+            <svg class="h-9 w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={s.icone} /></svg>
+            <h3 class="mt-5 text-2xl">{s.titulo}</h3>
+            <p class="mt-3 text-grafite">{s.texto}</p>
+            <p class="mt-4 font-medium">{s.para}</p>
+          </article>
+        ))
+      }
+    </div>
+    <div class="mt-16 grid gap-6 rounded-3xl bg-nevoa p-8 sm:p-10 md:grid-cols-2 md:gap-12">
+      <div>
+        <h3 class="text-2xl">Onde entra a IA</h3>
+        <p class="mt-3 text-grafite">Em dois lugares, e nenhum deles é para enfeitar.</p>
+      </div>
+      <div class="space-y-4">
+        <p><strong class="font-medium">No seu atendimento:</strong> um assistente responde preço, horário e dúvidas frequentes no WhatsApp e já faz o pré-agendamento. O que precisa de gente, ele passa para você.</p>
+        <p><strong class="font-medium">No nosso trabalho:</strong> a IA acelera a construção. É por isso que o prazo é de dias, e o preço cabe no bolso de um negócio pequeno.</p>
+      </div>
+    </div>
+  </section>
+
+  {
+    projetos.length > 0 && (
+      <section id="projetos" class="border-t border-nevoa">
+        <div class="conteudo py-20">
+          <div class="max-w-2xl">
+            <h2 class="text-4xl sm:text-5xl">Projetos</h2>
+            <p class="mt-4 text-lg text-grafite">Feitos em {site.cidade} para quem trabalha aqui, e também para clientes de fora.</p>
+          </div>
+          <div class="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+            {projetos.map((p) => (
+              <article class="border-t-2 border-tinta pt-6">
+                <p class="text-sm font-medium text-lima-escura">
+                  {p.tipo}
+                  {p.status && p.status !== 'no ar' && <span class="text-grafite">, {p.status}</span>}
+                </p>
+                <h3 class="mt-1 text-2xl">{p.nome}</h3>
+                <p class="mt-3 text-grafite">{p.resumo}</p>
+                {p.resultado && <p class="mt-3 font-medium">{p.resultado}</p>}
+                {p.link && (
+                  <a href={p.link} class="mt-4 inline-block underline decoration-lima decoration-2 underline-offset-4 hover:decoration-tinta">
+                    Ver {p.link.replace('https://', '')}
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Como funciona -->
+  <section id="como-funciona" class="border-y border-nevoa bg-white/60">
+    <div class="conteudo py-20">
+      <h2 class="max-w-2xl text-4xl sm:text-5xl">Do primeiro oi ao sistema no ar</h2>
+      <ol class="mt-14 grid gap-10 md:grid-cols-4 md:gap-8">
+        {
+          passos.map((p, i) => (
+            <li class="relative">
+              <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tinta font-bold text-lima">{i + 1}</span>
+                <span class="h-px flex-1 bg-tinta/15 max-md:hidden" aria-hidden="true" />
+              </div>
+              <p class="mt-5 text-sm font-medium text-lima-escura">{p.quando}</p>
+              <h3 class="mt-1 text-xl">{p.titulo}</h3>
+              <p class="mt-2 text-grafite">{p.texto}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- Planos -->
+  <section id="planos" class="conteudo py-20">
+    <div class="max-w-2xl">
+      <h2 class="text-4xl sm:text-5xl">Planos e preços</h2>
+      <p class="mt-4 text-lg text-grafite">
+        O setup paga a construção. A mensalidade mantém tudo no ar e evoluindo. Não cobramos por hora.
+      </p>
+    </div>
+    <div class="mt-14 grid items-start gap-6 lg:grid-cols-3">
+      {
+        planos.map((p) => (
+          <article
+            class:list={[
+              'flex h-full flex-col rounded-3xl p-8',
+              p.recomendado ? 'escuro bg-tinta text-papel lg:-mt-4 lg:pb-12' : 'border border-tinta/15',
+            ]}
+          >
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-2xl">{p.nome}</h3>
+              {p.recomendado && <span class="rounded-full bg-lima px-3 py-1 text-sm font-medium text-tinta">Recomendado</span>}
+            </div>
+            <p class:list={['mt-2 min-h-[3.2em]', p.recomendado ? 'text-nevoa-escura' : 'text-grafite']}>{p.para}</p>
+
+            <p class="mt-6">
+              {p.aPartirDe && <span class={p.recomendado ? 'text-nevoa-escura' : 'text-grafite'}>a partir de </span>}
+              <span class="text-5xl font-bold tracking-tight">{brl(p.mensal)}</span>
+              <span class={p.recomendado ? 'text-nevoa-escura' : 'text-grafite'}>/mês</span>
+            </p>
+            <p class:list={['mt-2 text-[0.95rem]', p.recomendado ? 'text-nevoa-escura' : 'text-grafite']}>
+              {p.setupFundador ? (
+                <>
+                  + setup de <strong class:list={['font-medium', p.recomendado ? 'text-papel' : 'text-tinta']}>{brl(p.setupFundador)}</strong> no Programa Fundadores{' '}
+                  <s class="whitespace-nowrap">({brl(p.setupCheio)})</s>
+                </>
+              ) : (
+                <>+ setup a partir de {brl(p.setupCheio)}, fechado após o diagnóstico</>
+              )}
+            </p>
+            <p class:list={['mt-5 text-[0.95rem] font-medium', p.recomendado ? 'text-lima' : 'text-lima-escura']}>{p.prazo}</p>
+
+            <ul class="mt-6 flex-1 space-y-3">
+              {p.itens.map((item) => (
+                <li class="flex items-start gap-3">
+                  <svg class:list={['mt-1 h-4 w-4 shrink-0', p.recomendado ? 'text-lima' : 'text-lima-escura']} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 6.5" /></svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p class:list={['mt-6 text-sm', p.recomendado ? 'text-nevoa-escura' : 'text-grafite']}>{p.fora}</p>
+            <a
+              href={linkWhatsApp(`Oi! Tenho interesse no plano ${p.nome} da Agiliza Labs.`)}
+              class:list={['mt-8', p.recomendado ? 'botao-principal' : 'botao-secundario']}
+            >
+              Quero o {p.nome}
+            </a>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Programa Fundadores -->
+  <section id="fundadores" class="border-y border-nevoa bg-white/60">
+    <div class="conteudo grid gap-12 py-20 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
+      <div>
+        <h2 class="text-4xl sm:text-5xl">Programa Fundadores</h2>
+        <p class="mt-5 text-lg text-grafite">
+          A Agiliza Labs está começando agora. Em vez de gastar com anúncio, preferimos investir nos primeiros clientes: {total} vagas com metade do setup, em troca de ajuda para mostrar o resultado.
+        </p>
+        <div class="mt-8">
+          <div class="flex gap-1.5" role="img" aria-label={`${preenchidas} de ${total} vagas preenchidas`}>
+            {Array.from({ length: total }, (_, i) => (
+              <span class:list={['h-3 flex-1 rounded-full', i < preenchidas ? 'bg-tinta' : 'bg-lima']} />
+            ))}
+          </div>
+          <p class="mt-3 text-[0.95rem]">
+            <strong class="font-medium">{total - preenchidas} de {total} vagas abertas.</strong> Inscrições até {prazo} ou até preencher.
+          </p>
+        </div>
+        <a href={linkWhatsApp('Oi! Quero uma vaga no Programa Fundadores da Agiliza Labs.')} class="botao-principal mt-8">Quero uma vaga de fundador</a>
+      </div>
+      <div class="grid gap-8 sm:grid-cols-2">
+        <div>
+          <h3 class="text-xl">Você ganha</h3>
+          <ul class="mt-4 space-y-3 text-grafite">
+            <li>50% de desconto no setup de qualquer plano</li>
+            <li>Atendimento direto com quem constrói o seu projeto</li>
+            <li>Prioridade nas melhorias que pedir</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-xl">Você topa</h3>
+          <ul class="mt-4 space-y-3 text-grafite">
+            <li>Gravar um depoimento de 30 segundos</li>
+            <li>Mostrarmos o projeto como case, com resultados reais</li>
+            <li>Avaliar a Agiliza no Google e indicar dois donos de negócio</li>
+            <li>Fidelidade de 6 meses na mensalidade</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparação -->
+  <section class="conteudo py-20">
+    <h2 class="max-w-3xl text-4xl sm:text-5xl">Por que não uma agência, um freelancer ou fazer sozinho?</h2>
+    <p class="mt-4 max-w-2xl text-lg text-grafite">Todas são opções válidas. A diferença está no prazo, no que acontece depois da entrega e em quem fica com o seu domínio.</p>
+    <div class="mt-12 overflow-x-auto rounded-3xl border border-tinta/15">
+      <table class="w-full min-w-[720px] text-left text-[0.98rem]">
+        <thead>
+          <tr class="border-b border-tinta/15">
+            <th scope="col" class="p-5 font-medium text-grafite"><span class="sr-only">Critério</span></th>
+            {comparacao.colunas.map((c, i) => (
+              <th scope="col" class:list={['p-5 align-bottom font-bold', i === 0 && 'bg-lima']}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {comparacao.linhas.map((l) => (
+            <tr class="border-b border-tinta/10 last:border-0">
+              <th scope="row" class="p-5 font-medium">{l.item}</th>
+              {l.valores.map((v, i) => (
+                <td class:list={['p-5', i === 0 ? 'bg-lima/25 font-medium' : 'text-grafite']}>{v}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Dúvidas -->
+  <section id="duvidas" class="border-t border-nevoa bg-white/60">
+    <div class="conteudo grid gap-10 py-20 lg:grid-cols-[1fr_2fr]">
+      <div>
+        <h2 class="text-4xl sm:text-5xl">Dúvidas frequentes</h2>
+        <p class="mt-4 text-grafite">Não achou a sua? <a href={linkWhatsApp('Oi! Tenho uma dúvida sobre a Agiliza Labs.')} class="text-tinta underline decoration-lima decoration-2 underline-offset-4">Pergunte no WhatsApp</a>.</p>
+      </div>
+      <div class="divide-y divide-tinta/10 border-y border-tinta/10">
+        {
+          duvidas.map((d) => (
+            <details class="group py-5">
+              <summary class="flex cursor-pointer list-none items-start justify-between gap-6 text-lg font-medium [&::-webkit-details-marker]:hidden">
+                {d.p}
+                <svg class="mt-1 h-5 w-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              </summary>
+              <p class="mt-3 max-w-2xl text-grafite">{d.r}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Chamada final -->
+  <section class="escuro bg-tinta text-papel">
+    <div class="conteudo border-b border-white/10 py-24">
+      <h2 class="text-5xl leading-[1.02] sm:text-7xl lg:text-8xl">{site.slogan}</h2>
+      <p class="mt-6 max-w-xl text-lg text-nevoa-escura">
+        Conte em uma mensagem o que mais tem travado a sua rotina. Em 15 minutos de conversa você sai com um diagnóstico, mesmo que não feche nada.
+      </p>
+      <a href={linkWhatsApp()} class="botao-principal mt-9 text-lg">Quero meu diagnóstico grátis</a>
+    </div>
+  </section>
+</Layout>

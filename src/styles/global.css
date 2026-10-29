@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/* Tokens da marca (ver 01 Empresa/brand-book.md) */
+@theme {
+  --color-tinta: #0e1116;
+  --color-lima: #c6f135;
+  --color-lima-escura: #3f6600;
+  --color-papel: #f6f6f1;
+  --color-nevoa: #e9eae3;
+  --color-grafite: #565c6a;
+  --color-nevoa-escura: #a3a9b6;
+
+  --font-sans: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-papel text-tinta font-sans antialiased;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  h1, h2, h3 {
+    @apply font-bold;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-tinta);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  .escuro :focus-visible {
+    outline-color: var(--color-lima);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@utility botao-principal {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-lima px-6 py-3.5 font-medium text-tinta transition-colors hover:bg-[#b5e01f];
+}
+@utility botao-secundario {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-tinta/25 px-6 py-3.5 font-medium text-tinta transition-colors hover:border-tinta;
+}
+@utility conteudo {
+  @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+}
