@@ -8,6 +8,11 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	"workers_dev": true,
+	"routes": [
+		{ "pattern": "agilizalabs.com.br", "custom_domain": true },
+		{ "pattern": "www.agilizalabs.com.br", "custom_domain": true }
+	],
 	"observability": {
 		"enabled": true
 	}
