@@ -1,0 +1,50 @@
+---
+import { env } from 'cloudflare:workers';
+import Layout from '../../layouts/Layout.astro';
+import { InfinitePay } from '../../lib/infinitepay';
+import { linkWhatsApp } from '../../config';
+
+export const prerender = false;
+
+// A InfinitePay volta para cá com estes parâmetros. Confirmamos no servidor antes de dizer "pago".
+const parametros = Astro.url.searchParams;
+const pedido = parametros.get('order_nsu');
+const transacao = parametros.get('transaction_nsu');
+const slug = parametros.get('slug');
+
+let pago = false;
+if (pedido && transacao && slug) {
+  try {
+    pago = (await new InfinitePay(env.INFINITEPAY_HANDLE).consultarPagamento({ pedido, transacao, slug })).pago;
+  } catch (erro) {
+    console.error(erro);
+  }
+}
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+---
+
+<Layout title="Pagamento | Agiliza Labs" description="Retorno do pagamento.">
+  <section class="conteudo max-w-lg py-16 text-center" data-pago={String(pago)}>
+    {pago ? (
+      <>
+        <h1 class="text-4xl">Pagamento confirmado ✓</h1>
+        <p class="mt-4 text-grafite">Obrigado! Seu site entra no ar em até 1 dia útil e a gente te avisa no WhatsApp.</p>
+      </>
+    ) : (
+      <>
+        <h1 class="text-4xl">Ainda não confirmamos o pagamento</h1>
+        <p class="mt-4 text-grafite">Se você pagou, pode levar alguns instantes. Qualquer dúvida, fala com a gente.</p>
+        <a class="botao-principal mt-8" href={linkWhatsApp('Oi! Fiz o pagamento final e quero confirmar.')}>Falar no WhatsApp</a>
+      </>
+    )}
+  </section>
+</Layout>
+
+<script>
+  // Aberta como janela pelo botão: avisa a página de origem e fecha.
+  const pago = document.querySelector('[data-pago]')?.getAttribute('data-pago') === 'true';
+  if (window.opener && !window.opener.closed) {
+    window.opener.postMessage({ tipo: 'infinitepay', pago }, location.origin);
+    if (pago) setTimeout(() => window.close(), 1500);
+  }
+</script>

@@ -1,0 +1,46 @@
+---
+import { env } from 'cloudflare:workers';
+import Layout from '../../layouts/Layout.astro';
+import BotaoPagar from '../../components/BotaoPagar.astro';
+import { lerCobranca } from '../../lib/cobranca';
+import { linkWhatsApp } from '../../config';
+
+export const prerender = false;
+
+const token = Astro.params.token ?? '';
+const cobranca = await lerCobranca(token, env.COBRANCA_SECRET);
+if (!cobranca) Astro.response.status = 404;
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+
+const valor = cobranca && (cobranca.valorCentavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const primeiroNome = cobranca?.cliente.nome.split(' ')[0];
+---
+
+<Layout title="Pagamento | Agiliza Labs" description="Pagamento seguro do seu projeto com a Agiliza Labs.">
+  <section class="conteudo max-w-lg py-16">
+    {cobranca ? (
+      <>
+        <p class="text-sm font-semibold uppercase tracking-wide text-lima-escura">Layout aprovado</p>
+        <h1 class="mt-2 text-4xl">Tudo certo, {primeiroNome}!</h1>
+        <p class="mt-4 text-grafite">Falta só o pagamento final para colocarmos o seu site no ar.</p>
+
+        <dl class="mt-8 rounded-2xl bg-nevoa p-6">
+          <dt class="text-sm text-grafite">{cobranca.descricao}</dt>
+          <dd class="mt-1 text-4xl font-semibold">{valor}</dd>
+          <dd class="mt-2 text-sm text-grafite">Pix ou cartão, pela InfinitePay. A entrada de 30% já foi recebida.</dd>
+        </dl>
+
+        <div class="mt-8">
+          <BotaoPagar token={token} rotulo={`Pagar ${valor}`} />
+        </div>
+        <p class="mt-6 text-center text-xs text-grafite">Pagamento processado pela InfinitePay. A Agiliza não vê nem guarda os dados do seu cartão.</p>
+      </>
+    ) : (
+      <>
+        <h1 class="text-4xl">Link vencido ou inválido</h1>
+        <p class="mt-4 text-grafite">Este link de pagamento não vale mais. Peça um novo para a gente.</p>
+        <a class="botao-principal mt-8" href={linkWhatsApp('Oi! Meu link de pagamento não abriu, pode me mandar outro?')}>Pedir um novo link</a>
+      </>
+    )}
+  </section>
+</Layout>

@@ -1,0 +1,82 @@
+---
+// Ilha sem framework: um custom element com poucas linhas de JS, carregado só nesta página.
+// Abre o checkout da InfinitePay numa janela por cima do site e espera o aviso da página de retorno.
+interface Props {
+  token: string;
+  rotulo: string;
+}
+const { token, rotulo } = Astro.props;
+---
+
+<botao-pagar data-token={token}>
+  <button type="button" class="botao-principal w-full text-lg disabled:cursor-wait disabled:opacity-60">{rotulo}</button>
+  <p class="mt-3 min-h-6 text-center text-sm text-grafite" role="status" aria-live="polite"></p>
+</botao-pagar>
+
+<script>
+  class BotaoPagar extends HTMLElement {
+    private botao = this.querySelector('button')!;
+    private status = this.querySelector('[role="status"]')!;
+    private rotulo = this.botao.textContent ?? '';
+
+    connectedCallback() {
+      this.botao.addEventListener('click', () => this.pagar());
+      window.addEventListener('message', (evento) => {
+        if (evento.origin !== location.origin || evento.data?.tipo !== 'infinitepay') return;
+        if (evento.data.pago) this.concluir();
+        else this.liberar('O pagamento não foi confirmado. Você pode tentar de novo.');
+      });
+    }
+
+    private async pagar() {
+      this.botao.disabled = true;
+      this.botao.textContent = 'Abrindo o pagamento…';
+      this.status.textContent = '';
+      // A janela abre já no clique; abrir depois do fetch faz o navegador bloquear.
+      const janela = window.open('', 'infinitepay', 'popup,width=480,height=760');
+
+      try {
+        const resposta = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: this.dataset.token }),
+        });
+        const { url, erro } = await resposta.json();
+        if (!resposta.ok) throw new Error(erro);
+
+        if (!janela || janela.closed) {
+          location.href = url; // pop-up bloqueado: segue na mesma aba e volta pela página de retorno
+          return;
+        }
+        janela.location.href = url;
+        this.botao.textContent = 'Pagamento aberto';
+        this.status.textContent = 'Conclua na janela da InfinitePay. Esta página atualiza sozinha.';
+        this.vigiar(janela);
+      } catch (erro) {
+        janela?.close();
+        this.liberar(erro instanceof Error && erro.message ? erro.message : 'Algo deu errado. Tente de novo.');
+      }
+    }
+
+    private vigiar(janela: Window) {
+      const intervalo = setInterval(() => {
+        if (!janela.closed) return;
+        clearInterval(intervalo);
+        if (this.botao.textContent === 'Pagamento aberto') this.liberar('A janela foi fechada antes da confirmação. Pagou? Aguarde nosso aviso; senão, tente de novo.');
+      }, 800);
+    }
+
+    private concluir() {
+      this.botao.textContent = 'Pagamento confirmado ✓';
+      this.status.textContent = 'Recebemos! Seu site entra no ar em até 1 dia útil.';
+    }
+
+    private liberar(mensagem: string) {
+      this.botao.disabled = false;
+      this.botao.textContent = this.rotulo;
+      this.status.textContent = mensagem;
+    }
+  }
+
+  customElements.define('botao-pagar', BotaoPagar);
+</script>
