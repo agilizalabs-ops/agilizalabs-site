@@ -12,6 +12,15 @@ export interface FormaDePagamento {
   nota: string;
 }
 
+export interface Opcional {
+  id: string;
+  nome: string;
+  texto: string;
+  setup: number;
+  mensal?: number;
+  aPartirDe?: boolean;
+}
+
 export interface Tier {
   id: 'presenca' | 'institucional' | 'conteudo' | 'loja';
   nome: string;
@@ -21,7 +30,8 @@ export interface Tier {
   entra: string[];
   /** O que só vem no plano com Cuidado. */
   noCuidado?: string[];
-  opcionais?: { nome: string; texto: string }[];
+  /** Opcionais com valor estimado; o valor final sai na conversa. */
+  opcionais?: Opcional[];
   formas: FormaDePagamento[];
 }
 
@@ -41,8 +51,11 @@ export const tiers: Tier[] = [
     noCuidado: ['Atendente com IA treinado com os dados do seu negócio, até 300 conversas por mês', 'Site sempre no ar e 1 alteração por mês'],
     opcionais: [
       {
+        id: 'agenda-pix',
         nome: 'Agenda com sinal por Pix',
-        texto: 'Sua cliente escolhe o horário no site e paga o sinal pelo Pix. Você liga o sinal nas épocas de agenda cheia. Valor combinado na conversa.',
+        texto: 'Sua cliente escolhe o horário no site e paga o sinal pelo Pix. Você liga o sinal nas épocas de agenda cheia.',
+        setup: 800,
+        mensal: 49,
       },
     ],
     formas: [
@@ -69,26 +82,6 @@ export const tiers: Tier[] = [
     ],
   },
   {
-    id: 'conteudo',
-    nome: 'Conteúdo e News',
-    para: 'Para quem publica toda semana',
-    exemplos: 'Portal de notícias, rádio, blog, associação',
-    prazo: 'Prazo combinado na proposta',
-    entra: [
-      'SEO profissional em cada matéria, pronta para o Google',
-      'Painel para a sua equipe publicar sem depender de ninguém',
-      'Editorias, busca e notícias relacionadas',
-      'Espaços para anunciantes',
-    ],
-    opcionais: [
-      {
-        nome: 'Robô de notícias com IA',
-        texto: 'Busca as notícias oficiais da região, escreve a matéria e entrega para a redação aprovar. Valor combinado na conversa.',
-      },
-    ],
-    formas: [{ nome: 'Projeto', setup: 3500, aPartirDe: true, nota: 'Valor fechado depois de uma conversa sobre a sua redação.' }],
-  },
-  {
     id: 'loja',
     nome: 'E‑commerce',
     para: 'Para quem vende produto',
@@ -103,6 +96,30 @@ export const tiers: Tier[] = [
     noCuidado: ['Atendente com IA que responde dúvidas sobre os produtos'],
     formas: [{ nome: 'Com Cuidado', setup: 2500, setupAte: 4000, mensal: 197, nota: 'Conforme o número de produtos. A plataforma você paga direto.' }],
   },
+  {
+    id: 'conteudo',
+    nome: 'Conteúdo e News',
+    para: 'Para quem publica toda semana',
+    exemplos: 'Portal de notícias, rádio, blog, associação',
+    prazo: 'Prazo combinado na proposta',
+    entra: [
+      'SEO profissional em cada matéria, pronta para o Google',
+      'Painel para a sua equipe publicar sem depender de ninguém',
+      'Editorias, busca e notícias relacionadas',
+      'Espaços para anunciantes',
+    ],
+    opcionais: [
+      {
+        id: 'robo-noticias',
+        nome: 'Robô de notícias com IA',
+        texto: 'Busca as notícias oficiais da região, escreve a matéria e entrega para a redação aprovar.',
+        setup: 1500,
+        mensal: 297,
+        aPartirDe: true,
+      },
+    ],
+    formas: [{ nome: 'Projeto', setup: 3500, aPartirDe: true, nota: 'Valor fechado depois de uma conversa sobre a sua redação.' }],
+  },
 ];
 
 export const brl = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
@@ -113,7 +130,8 @@ export function precoDeVitrine(tier: Tier) {
   return brl(unico.setup);
 }
 
-export function precoDaForma(f: FormaDePagamento) {
+/** Funciona para formas de pagamento e opcionais: setup (ou faixa), "a partir de" e mensalidade. */
+export function precoDaForma(f: Pick<FormaDePagamento, 'setup' | 'setupAte' | 'mensal' | 'aPartirDe'>) {
   const setup = f.setupAte ? `${brl(f.setup)} a ${brl(f.setupAte)}` : brl(f.setup);
   const base = f.aPartirDe ? `a partir de ${setup}` : setup;
   return f.mensal ? `${base} + ${brl(f.mensal)}/mês` : base;

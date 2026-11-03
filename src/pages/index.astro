@@ -47,7 +47,7 @@ const appTelas = [
       <ul class="border-t border-white/15">
         {tiers.map((t) => (
           <li class="border-b border-white/15">
-            <details class="tier group" id={t.id}>
+            <details class="tier group" id={`tipo-${t.id}`}>
               <summary class="grid cursor-pointer list-none grid-cols-[1fr_auto] items-end gap-x-6 gap-y-1 py-6 sm:py-8 [&::-webkit-details-marker]:hidden">
                 <span class="nome text-[2.3rem] font-bold leading-none tracking-tight sm:text-7xl lg:text-8xl">{t.nome}</span>
                 <span class="text-right">
@@ -75,28 +75,68 @@ const appTelas = [
                   </ul>
                   <p class="mt-5 font-medium text-lima">{t.prazo}</p>
                 </div>
-                <div class="space-y-3">
-                  {t.formas.map((f) => (
-                    <div class="rounded-2xl border border-white/20 p-5">
-                      <p class="text-sm text-nevoa-escura">{f.nome}</p>
-                      <p class="mt-1 text-2xl font-bold">{precoDaForma(f)}</p>
-                      <p class="mt-1 text-sm text-nevoa-escura">{f.nota}</p>
-                      {f.mensal && t.noCuidado && (
-                        <ul class="mt-3 space-y-1 text-sm">
-                          {t.noCuidado.map((c) => <li>+ {c}</li>)}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                  {t.opcionais?.map((o) => (
-                    <div class="rounded-2xl border border-dashed border-lima/60 p-5">
-                      <p class="text-sm text-lima">Opcional</p>
-                      <p class="mt-1 text-lg font-bold">{o.nome}</p>
-                      <p class="mt-1 text-sm text-nevoa-escura">{o.texto}</p>
-                    </div>
-                  ))}
-                  <a href={linkWhatsApp(`Oi, Carlos! Vi o site e quero conversar sobre o ${t.nome}.`)} class="botao-principal w-full text-lg">Quero o {t.nome}</a>
-                </div>
+                <montador-plano class="block space-y-3" data-tier={t.nome}>
+                  <fieldset class="space-y-3">
+                    <legend class="mb-3 text-sm text-nevoa-escura">{t.formas.length > 1 ? 'Escolha como pagar' : 'Como funciona o valor'}</legend>
+                    {t.formas.map((f, i) => (
+                      <label class="escolha block cursor-pointer rounded-2xl border border-white/20 p-5">
+                        <input type="radio" name={`forma-${t.id}`} class="sr-only" checked={i === 0} data-nome={f.nome} data-setup={f.setup} data-setup-ate={f.setupAte} data-mensal={f.mensal} data-a-partir={f.aPartirDe ? '1' : undefined} />
+                        <span class="flex items-center justify-between gap-3">
+                          <span class="text-sm text-nevoa-escura">{f.nome}</span>
+                          <span class="marca" aria-hidden="true"></span>
+                        </span>
+                        <span class="mt-1 block text-2xl font-bold">{precoDaForma(f)}</span>
+                        <span class="mt-1 block text-sm text-nevoa-escura">{f.nota}</span>
+                        {f.mensal && t.noCuidado && (
+                          <span class="mt-3 block space-y-1 text-sm">
+                            {t.noCuidado.map((c) => <span class="block">+ {c}</span>)}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </fieldset>
+
+                  {t.opcionais && (
+                    <fieldset class="space-y-3">
+                      <legend class="mb-3 text-sm text-nevoa-escura">Quer somar?</legend>
+                      {t.opcionais.map((o) => (
+                        <label class="escolha block cursor-pointer rounded-2xl border border-dashed border-lima/60 p-5">
+                          <input type="checkbox" class="sr-only" data-nome={o.nome} data-setup={o.setup} data-mensal={o.mensal} data-a-partir={o.aPartirDe ? '1' : undefined} />
+                          <span class="flex items-center justify-between gap-3">
+                            <span class="text-lg font-bold">{o.nome}</span>
+                            <span class="marca quadrada" aria-hidden="true"></span>
+                          </span>
+                          <span class="mt-1 block text-sm text-nevoa-escura">{o.texto}</span>
+                          <span class="mt-2 block text-sm font-medium text-lima">+ {precoDaForma(o)} (estimado)</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+
+                  <div class="rounded-2xl bg-white/[0.06] p-5" aria-live="polite">
+                    <p class="text-sm text-nevoa-escura">Estimativa do seu plano</p>
+                    <p data-total class="mt-1 text-3xl font-bold text-lima">{precoDaForma(t.formas[0])}</p>
+                    <p class="mt-1 text-sm text-nevoa-escura">Valor estimado. O final sai na conversa sobre o plano de desenvolvimento.</p>
+                  </div>
+
+                  <a data-agendar href={linkWhatsApp(`Oi, Carlos! Quero agendar uma conversa sobre o ${t.nome}.`)} class="botao-principal w-full text-lg">Agendar conversa sobre o plano</a>
+
+                  <details class="como group rounded-2xl border border-white/15">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-medium [&::-webkit-details-marker]:hidden">
+                      Como desenvolvemos?
+                      <svg class="h-4 w-4 transition-transform group-open:rotate-45 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                    </summary>
+                    <ol class="space-y-3 px-5 pb-5">
+                      {passos.map((p, i) => (
+                        <li class="flex gap-3">
+                          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lima text-sm font-bold text-tinta">{i + 1}</span>
+                          <span><span class="font-medium">{p.titulo}.</span> <span class="text-nevoa-escura">{p.texto}</span></span>
+                        </li>
+                      ))}
+                      <li class="pl-10 text-sm text-lima">{t.prazo}.</li>
+                    </ol>
+                  </details>
+                </montador-plano>
               </div>
             </details>
           </li>
@@ -288,6 +328,14 @@ const appTelas = [
   .tier summary:hover .nome { color: var(--color-lima); }
   .tier summary:focus-visible { outline: 3px solid var(--color-lima); outline-offset: 4px; border-radius: 0.5rem; }
 
+  /* Montador do plano: a escolha marcada fica com a borda lima. */
+  .escolha:hover { border-color: rgb(255 255 255 / 0.5); }
+  .escolha:has(input:checked) { border-style: solid; border-color: var(--color-lima); background: rgb(198 241 53 / 0.08); }
+  .escolha:has(input:focus-visible) { outline: 3px solid var(--color-lima); outline-offset: 3px; }
+  .marca { width: 1.25rem; height: 1.25rem; flex-shrink: 0; border-radius: 999px; border: 2px solid rgb(255 255 255 / 0.4); }
+  .marca.quadrada { border-radius: 0.35rem; }
+  .escolha:has(input:checked) .marca { border-color: var(--color-lima); background: var(--color-lima); box-shadow: inset 0 0 0 3px var(--color-tinta); }
+
   /* Mostruário: navegador que rola a página sozinho e celular que troca de tela. */
   .navegador { overflow: hidden; border-radius: 1.25rem; border: 1px solid color-mix(in srgb, var(--color-tinta) 15%, transparent); background: #fff; box-shadow: 0 40px 80px -40px rgb(14 17 22 / 0.45); }
   .barra { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--color-nevoa); }
@@ -310,3 +358,42 @@ const appTelas = [
     .quadro:first-child { opacity: 1; }
   }
 </style>
+
+<script>
+  import { linkWhatsApp } from '../config';
+
+  const brl = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
+
+  // Soma a forma de pagamento escolhida com os opcionais marcados e leva o plano para o agendamento.
+  class MontadorPlano extends HTMLElement {
+    connectedCallback() {
+      this.addEventListener('change', () => this.atualizar());
+      this.atualizar();
+    }
+
+    private atualizar() {
+      const escolhidos = [...this.querySelectorAll<HTMLInputElement>('input:checked')];
+      let setup = 0;
+      let setupAte = 0;
+      let mensal = 0;
+      let aPartir = false;
+      for (const i of escolhidos) {
+        const s = Number(i.dataset.setup ?? 0);
+        setup += s;
+        setupAte += Number(i.dataset.setupAte ?? s);
+        mensal += Number(i.dataset.mensal ?? 0);
+        aPartir ||= i.dataset.aPartir === '1';
+      }
+      const faixa = setupAte > setup ? `${brl(setup)} a ${brl(setupAte)}` : brl(setup);
+      const total = `${aPartir ? 'a partir de ' : ''}${faixa}${mensal ? ` + ${brl(mensal)}/mês` : ''}`;
+      this.querySelector('[data-total]')!.textContent = total;
+
+      const plano = escolhidos.map((i) => i.dataset.nome).join(' + ');
+      this.querySelector<HTMLAnchorElement>('[data-agendar]')!.href = linkWhatsApp(
+        `Oi, Carlos! Quero agendar uma conversa sobre o plano de desenvolvimento do meu site.\nTipo: ${this.dataset.tier}\nEscolhas: ${plano}\nEstimativa do site: ${total}`,
+      );
+    }
+  }
+
+  customElements.define('montador-plano', MontadorPlano);
+</script>

@@ -11,7 +11,9 @@ function catalogo() {
     .map((t) => {
       const formas = t.formas.map((f) => `  - ${f.nome}: ${precoDaForma(f)}. ${f.nota}`).join('\n');
       const cuidado = t.noCuidado?.length ? `\n  Só no plano com Cuidado: ${t.noCuidado.join('; ')}.` : '';
-      const opcionais = t.opcionais?.length ? `\n  Opcionais: ${t.opcionais.map((o) => `${o.nome} (${o.texto})`).join('; ')}` : '';
+      const opcionais = t.opcionais?.length
+        ? `\n  Opcionais: ${t.opcionais.map((o) => `${o.nome} (${o.texto} Valor estimado: ${precoDaForma(o)}; o final sai na conversa)`).join('; ')}`
+        : '';
       return `### ${t.nome} (id: ${t.id})\n${t.para}. Exemplos: ${t.exemplos}.\nPrazo: ${t.prazo}.\nO que entra: ${t.entra.join('; ')}.${cuidado}${opcionais}\nFormas de pagar:\n${formas}`;
     })
     .join('\n\n');
