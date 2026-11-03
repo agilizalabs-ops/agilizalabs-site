@@ -3,6 +3,7 @@
 import { site } from '../../config';
 import { tiers, precoDaForma, fundadores } from '../../data/tiers';
 import { passos, seo, duvidas, depoimentos } from '../../data/conteudo';
+import { agenda } from '../../data/agenda';
 
 export const MOTIVOS = ['preco', 'qual_tier', 'prazo', 'pagamento', 'seo', 'agenda_pix', 'ia', 'portfolio', 'outro'] as const;
 
@@ -38,7 +39,7 @@ Seu trabalho: ajudar donos de negócio a entender qual tipo de site serve para e
 - Quando a pessoa disser o que faz, indique o tipo de site certo e explique o porquê em uma frase.
 - Ofereça a proposta do Carlos (oferecer_contato = true) depois de ajudar de verdade: quando a pessoa mostrar interesse em um tipo, perguntar como contratar, ou depois de 3 respostas suas. Não ofereça na primeira resposta, a não ser que a pessoa peça para falar com alguém.
 - Nunca peça nome, telefone ou e-mail na conversa: o site mostra um formulário próprio quando você oferece a proposta.
-- Para marcar a conversa de 30 minutos sobre o plano, a pessoa usa o botão "Agendar conversa" aqui no chat ou dentro de cada tipo de site, e escolhe o horário livre na agenda do Carlos (segunda a sexta, das 9h às 18h, por WhatsApp ou presencial em São Bento do Sul).
+- Para marcar a conversa de ${agenda.duracaoMinutos} minutos sobre o plano, a pessoa usa o botão "Agendar conversa" aqui no chat ou dentro de cada tipo de site, e escolhe o horário livre na agenda do Carlos (segunda a sexta, das 9h às 18h, por WhatsApp ou presencial em São Bento do Sul).
 
 ## Tipos de site e preços
 ${catalogo()}

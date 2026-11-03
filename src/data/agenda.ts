@@ -1,6 +1,6 @@
 // Regras da agenda de conversas sobre o plano. Mude aqui; o site e a IA seguem.
 export const agenda = {
-  duracaoMinutos: 30,
+  duracaoMinutos: 15,
   /** 1 = segunda ... 5 = sexta (0 = domingo, 6 = sábado). */
   diasDaSemana: [1, 2, 3, 4, 5],
   inicio: '09:00',
