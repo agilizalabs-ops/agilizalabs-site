@@ -35,6 +35,15 @@ export interface Tier {
   formas: FormaDePagamento[];
 }
 
+/** Complemento dos tiers 1, 2 e 4: o atendente sai do site e vai para o WhatsApp do negócio. */
+const whatsappComIA: Opcional = {
+  id: 'whatsapp-ia',
+  nome: 'Atendimento no WhatsApp com IA',
+  texto: 'Responde no seu WhatsApp a qualquer hora: preço, horário, endereço e dúvidas. Agenda ou anota o pedido e passa para você quando precisa de gente. Pelo WhatsApp oficial, até 1.000 conversas por mês.',
+  setup: 2500,
+  mensal: 497,
+};
+
 export const tiers: Tier[] = [
   {
     id: 'presenca',
@@ -48,7 +57,7 @@ export const tiers: Tier[] = [
       'Google Perfil criado ou ajustado',
       'Botão de WhatsApp com mensagem pronta e um QR code para o balcão',
     ],
-    noCuidado: ['Atendente com IA treinado com os dados do seu negócio, até 300 conversas por mês', 'Site sempre no ar e 1 alteração por mês'],
+    noCuidado: ['Atendente com IA no site, treinado com os dados do seu negócio, até 300 conversas por mês', 'Site sempre no ar e 1 alteração por mês'],
     opcionais: [
       {
         id: 'agenda-pix',
@@ -57,6 +66,7 @@ export const tiers: Tier[] = [
         setup: 800,
         mensal: 49,
       },
+      whatsappComIA,
     ],
     formas: [
       { nome: 'Pago uma vez', setup: 1000, nota: '30% para começar e 70% quando aprovar o layout. Alterações depois são cobradas à parte.' },
@@ -75,7 +85,8 @@ export const tiers: Tier[] = [
       'Formulário de orçamento, WhatsApp e mapa',
       'Textos revisados com você',
     ],
-    noCuidado: ['Atendente com IA treinado com os dados da sua empresa', 'Site sempre no ar e 3 alterações por mês'],
+    noCuidado: ['Atendente com IA no site, treinado com os dados da sua empresa', 'Site sempre no ar e 3 alterações por mês'],
+    opcionais: [whatsappComIA],
     formas: [
       { nome: 'Pago uma vez', setup: 2400, nota: '30% para começar e 70% quando aprovar o layout. Alterações depois são cobradas à parte.' },
       { nome: 'Com Cuidado', setup: 1400, mensal: 149, nota: 'A mensalidade cobre hospedagem, o atendente com IA e o meu cuidado com o site.' },
@@ -93,7 +104,8 @@ export const tiers: Tier[] = [
       'Visual com a sua marca e até 30 produtos cadastrados',
       '1 hora de treinamento para você cadastrar sozinho',
     ],
-    noCuidado: ['Atendente com IA que responde dúvidas sobre os produtos'],
+    noCuidado: ['Atendente com IA no site, que responde dúvidas sobre os produtos'],
+    opcionais: [whatsappComIA],
     formas: [{ nome: 'Com Cuidado', setup: 2500, setupAte: 4000, mensal: 197, nota: 'Conforme o número de produtos. A plataforma você paga direto.' }],
   },
   {
