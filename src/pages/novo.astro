@@ -1,44 +1,64 @@
 ---
-// MOCKUP do novo fluxo (branch mockup-fluxo). Não publicar: preços ainda são proposta.
-// Fluxo: ser achado (hero) → "parece que…" (rótulos) → escolha guiada → oferta → como aprova e paga
-// → padrão de visibilidade → provas → quem faz → objeções → fechamento.
+// MOCKUP v2 (branch mockup-fluxo). Não publicar: preços ainda são proposta.
+// Conceito "letreiro": os 4 Tiers aparecem na abertura, em letra grande e com preço,
+// como o quadro de preços de uma loja da rua. O resto da página só responde "como" e "por que confiar".
 import Layout from '../layouts/Layout.astro';
 import { site, linkWhatsApp, projetos } from '../config';
 
 const brl = (v: number) => `R$ ${v.toLocaleString('pt-BR')}`;
 
-const rotulos = [
-  { fala: 'Parece que o cliente pergunta o preço no direct e some.', custo: 'Com serviços e preços num link só, ele chega no WhatsApp já decidido.' },
-  { fala: 'Parece que quem pesquisa o seu serviço na cidade acha o concorrente.', custo: 'Quem não aparece no Google e no Maps não entra nem na comparação.' },
-  { fala: 'Parece que o Instagram dá trabalho e traz pouca gente nova.', custo: 'O Instagram mostra para quem já te segue. O Google mostra para quem está procurando agora.' },
+const tiers = [
+  {
+    id: 'presenca',
+    nome: 'Presença',
+    para: 'Para quem trabalha sozinho',
+    exemplos: 'Manicure, personal, fotógrafo, diarista, professor particular',
+    aPartir: brl(500),
+    prazo: 'No ar em 7 dias úteis',
+    entra: ['Site de 1 página com seus serviços, preços e fotos', 'Google Perfil criado ou ajustado', 'Botão de WhatsApp com mensagem pronta', 'Respostas rápidas do WhatsApp e um QR code para o balcão'],
+    formas: [
+      { nome: 'Pago uma vez', valor: brl(1000), nota: `${brl(300)} para começar, ${brl(700)} quando aprovar o layout` },
+      { nome: 'Com Cuidado', valor: `${brl(500)} + ${brl(59)}/mês`, nota: 'Site sempre no ar e 1 alteração por mês' },
+    ],
+  },
+  {
+    id: 'institucional',
+    nome: 'Institucional',
+    para: 'Para empresa com endereço e equipe',
+    exemplos: 'Oficina, clínica, loja de bairro, restaurante, prestador de serviço',
+    aPartir: brl(1400),
+    prazo: 'No ar em 15 dias úteis',
+    entra: ['Até 5 páginas: início, serviços, sobre, contato e mais uma', 'Formulário de orçamento, WhatsApp e mapa', 'Uma página por serviço com o nome da cidade, para a busca local', 'Textos revisados com você'],
+    formas: [
+      { nome: 'Pago uma vez', valor: brl(2400), nota: '30% para começar, 70% quando aprovar o layout' },
+      { nome: 'Com Cuidado', valor: `${brl(1400)} + ${brl(149)}/mês`, nota: 'Site sempre no ar e 3 alterações por mês' },
+    ],
+  },
+  {
+    id: 'conteudo',
+    nome: 'Conteúdo e News',
+    para: 'Para quem publica toda semana',
+    exemplos: 'Portal de notícias, rádio, blog, associação',
+    aPartir: brl(3500),
+    prazo: 'Prazo combinado na proposta',
+    entra: ['Painel para a sua equipe publicar sem depender de ninguém', 'Editorias, busca e notícias relacionadas', 'Espaços para anunciantes', 'Cada matéria pronta para aparecer no Google'],
+    formas: [{ nome: 'Projeto', valor: `a partir de ${brl(3500)}`, nota: 'Valor fechado depois de uma conversa sobre a sua redação' }],
+  },
+  {
+    id: 'loja',
+    nome: 'E‑commerce',
+    para: 'Para quem vende produto',
+    exemplos: 'Loja de roupa, artesanato, alimentos, peças',
+    aPartir: brl(2500),
+    prazo: 'No ar em 15 dias úteis',
+    entra: ['Loja na Nuvemshop, Shopify ou Loja Integrada, com Pix e cartão', 'Visual com a sua marca e até 30 produtos cadastrados', 'Frete, domínio e Google configurados', '1 hora de treinamento para você cadastrar sozinho'],
+    formas: [{ nome: 'Projeto + Cuidado', valor: `${brl(2500)} a ${brl(4000)} + ${brl(197)}/mês`, nota: 'Conforme o número de produtos. A plataforma você paga direto' }],
+  },
 ];
-
-// Escolha guiada: o visitante responde 2 perguntas e recebe 1 recomendação.
-const resultados = {
-  'autonomo-unico': { nome: 'Agenda Cheia', preco: brl(1000), detalhe: `${brl(300)} para começar e ${brl(700)} quando você aprovar o layout. Sem mensalidade.`, prazo: 'No ar em 7 dias úteis', itens: ['Site de 1 página com a sua cara, serviços e preços', 'Google Perfil criado ou ajustado', 'Botão de WhatsApp com mensagem pronta', 'Kit WhatsApp Pronto, QR do Balcão e mensagem para pedir avaliação'] },
-  'autonomo-cuidado': { nome: 'Agenda Cheia + Cuidado', preco: `${brl(500)} + ${brl(59)}/mês`, detalhe: `${brl(150)} para começar e ${brl(350)} quando aprovar. A mensalidade cobre o site sempre no ar e 1 alteração por mês.`, prazo: 'No ar em 7 dias úteis', itens: ['Tudo do Agenda Cheia', 'Site monitorado, rápido e com backup', 'Google Perfil revisado todo mês', '1 alteração pequena por mês e relatório mensal'] },
-  'empresa-unico': { nome: 'Institucional', preco: brl(2400), detalhe: '30% para começar e 70% quando você aprovar o layout. Sem mensalidade.', prazo: 'No ar em 15 dias úteis', itens: ['Até 5 páginas: início, serviços, sobre, contato e mais uma', 'Formulário de orçamento, WhatsApp e mapa', 'Preparado para Google, Maps e respostas de IA', 'Textos revisados com você'] },
-  'empresa-cuidado': { nome: 'Institucional + Cuidado', preco: `${brl(1400)} + ${brl(149)}/mês`, detalhe: '30% para começar e 70% quando aprovar. A mensalidade cobre o site sempre no ar e 3 alterações por mês.', prazo: 'No ar em 15 dias úteis', itens: ['Tudo do Institucional', 'Site monitorado, rápido e com backup', 'Google Perfil revisado todo mês', '3 alterações pequenas por mês e relatório mensal'] },
-  produtos: { nome: 'Loja virtual', preco: `${brl(2500)} a ${brl(4000)}`, detalhe: `Conforme o número de produtos, mais ${brl(197)}/mês de cuidado. A mensalidade da plataforma é paga direto por você.`, prazo: 'No ar em 15 dias úteis', itens: ['Loja na Nuvemshop, Shopify ou Loja Integrada, com Pix e cartão', 'Visual com a sua marca e até 30 produtos cadastrados', 'Frete, domínio e Google configurados', '1 hora de treinamento para você cadastrar sozinho'] },
-  sobmedida: { nome: 'Sob Medida', preco: `a partir de ${brl(6000)}`, detalhe: 'Valor fechado depois de um diagnóstico do seu processo, pago em 3 etapas.', prazo: 'Protótipo em 5 dias úteis', itens: ['App, sistema, agenda com sinal por Pix ou área de clientes', 'Diagnóstico antes de qualquer código', 'Escopo e prazo no contrato'] },
-};
-
-const pilha = [
-  { problema: 'Ninguém me acha no Google', entra: 'Google Perfil criado ou ajustado e o site preparado para Google, Maps e respostas de IA', valor: 297 },
-  { problema: 'Passo o dia respondendo preço', entra: 'Página com serviços, preços e dúvidas frequentes, e botão de WhatsApp com mensagem pronta', valor: 0 },
-  { problema: 'Pareço amadora perto das outras', entra: 'Layout sob medida com as suas fotos, sem cara de modelo pronto', valor: 1200 },
-  { problema: 'Não tenho tempo para isso', entra: 'Uma conversa de 15 minutos. O resto é com a gente', valor: 0 },
-];
-const bonus = [
-  { nome: 'Kit WhatsApp Pronto', texto: 'Saudação, ausência e 5 respostas rápidas escritas para o seu negócio.', valor: 150 },
-  { nome: 'QR do Balcão', texto: 'Arte com QR code para imprimir e deixar no seu espaço.', valor: 80 },
-  { nome: 'Mensagem de Avaliação', texto: 'Texto pronto para pedir avaliação no Google às suas clientes.', valor: 50 },
-];
-const valorPilha = 1200 + 297 + bonus.reduce((t, b) => t + b.valor, 0);
 
 const passos = [
-  { titulo: 'Conversa de 15 minutos', texto: 'Pessoalmente ou no WhatsApp. A gente anota tudo: o que você faz, quem é o seu cliente e o que te preocupa.' },
-  { titulo: 'Entrada de 30%', texto: 'Por Pix. Só depois disso a gente começa, e você recebe o prazo por escrito.' },
+  { titulo: 'Conversa de 15 minutos', texto: 'Pessoalmente ou no WhatsApp. Eu anoto o que você faz, quem é o seu cliente e o que te preocupa.' },
+  { titulo: 'Entrada de 30% e prazo por escrito', texto: 'Pelo Pix. A produção começa no mesmo dia.' },
   { titulo: 'Você aprova no próprio layout', texto: 'O layout chega num link com dois botões: aprovar ou pedir uma correção.' },
   { titulo: 'Paga o restante e vai ao ar', texto: 'Pix ou cartão, ali mesmo. O site entra no ar em até 1 dia útil.' },
 ];
@@ -46,201 +66,93 @@ const passos = [
 const visibilidade = [
   'Google Perfil completo, que é o que mais pesa no "perto de mim"',
   'Nome, endereço e telefone iguais no site, no Google e nas redes',
-  'Dados que o Google e a IA leem para entender o que você faz e onde',
+  'Dados que o Google e as IAs leem para saber o que você faz e onde',
   'Perguntas frequentes escritas do jeito que as pessoas pesquisam',
   'Cadastro no Google e no Bing, que alimenta a busca do ChatGPT',
-  'Rápido no celular: nota mínima de 90 no teste do Google',
+  'Nota mínima de 90 no teste de velocidade do Google, no celular',
 ];
 
 const duvidas = [
-  { p: 'E se eu não gostar do layout?', r: 'Você tem uma correção antes de aprovar, e só paga os 70% depois de clicar em "Aprovar layout". Se mesmo assim não for o que esperava, a gente conversa antes de seguir.' },
-  { p: 'Vocês garantem que eu apareço em primeiro no Google?', r: 'Não, e desconfie de quem garante. Ninguém controla a posição. O que garantimos é que o seu site e o seu Google Perfil saem prontos e configurados para isso, que é o que pesa.' },
-  { p: 'Preciso pagar mensalidade?', r: 'Não. Você escolhe: paga uma vez e o site fica na sua conta, ou paga um valor menor no começo e uma mensalidade para a gente cuidar de tudo.' },
-  { p: 'O domínio e o site ficam no meu nome?', r: 'Sim. O endereço .com.br é registrado no seu nome. Se um dia quiser sair, leva tudo.' },
-  { p: 'Meu sobrinho faz site. Por que eu pagaria vocês?', r: 'Pode ser que ele faça um ótimo site. A diferença está no que vem junto: Google Perfil, preparação para aparecer na busca, prazo por escrito e alguém que responde quando algo precisa mudar.' },
-  { p: 'E se eu precisar mudar um preço depois?', r: `No plano com Cuidado, entra na sua cota do mês. Sem mensalidade, cada alteração pequena custa ${brl(80)}.` },
+  { p: 'E se eu não gostar do layout?', r: 'Você pede uma correção antes de aprovar, e os 70% só são cobrados depois que você clica em "Aprovar layout".' },
+  { p: 'Vocês garantem primeiro lugar no Google?', r: 'Não. Ninguém controla a posição, e quem promete está chutando. O que eu garanto é o site e o Google Perfil configurados do jeito que o Google usa para escolher quem mostrar.' },
+  { p: 'Preciso pagar mensalidade?', r: 'Só se quiser. Pago uma vez, o site fica na sua conta e cada alteração pequena custa R$ 80. Com Cuidado, você paga menos no começo e eu mantenho tudo no ar.' },
+  { p: 'O domínio fica no meu nome?', r: 'Sim, o endereço .com.br é registrado no seu nome. Se um dia quiser sair, leva tudo.' },
+  { p: 'Meu sobrinho faz site. Por que eu pagaria você?', r: 'Ele pode fazer um ótimo site. Comigo vêm junto o Google Perfil, a preparação para a busca, o prazo por escrito e alguém que responde quando precisar mudar um preço.' },
 ];
 
 const { total, preenchidas, prazo } = site.fundadores;
+const provas = projetos.filter((p) => p.link && p.status !== 'em desenvolvimento');
 ---
 
-<Layout title={`Site para o seu negócio ser achado em ${site.cidade} | Agiliza Labs`} description="Mockup do novo fluxo do site da Agiliza Labs.">
-  <!-- 1. Ser achado -->
-  <section class="conteudo grid items-center gap-12 pb-16 pt-10 lg:grid-cols-[1.15fr_1fr] lg:pb-24 lg:pt-20">
-    <div>
-      <h1 class="text-[2.5rem] leading-[1.03] sm:text-6xl lg:text-[3.7rem]">Quando pesquisam o seu serviço na cidade, quem aparece é você?</h1>
-      <p class="mt-6 max-w-xl text-lg text-grafite sm:text-xl">
-        Site sob medida e Google Perfil prontos para quem procura agora. No ar em 7 dias, e você só paga o restante quando aprovar o layout.
+<Layout title={`Sites para negócios de ${site.cidade} | Agiliza Labs`} description="Mockup v2 do site da Agiliza Labs: os quatro tipos de site com preço.">
+  <!-- O letreiro -->
+  <section class="escuro letreiro bg-tinta text-papel">
+    <div class="conteudo pb-10 pt-14 sm:pt-20">
+      <p class="max-w-3xl text-[2.4rem] font-medium leading-[1.02] sm:text-6xl lg:text-7xl">
+        Sites que trazem cliente para negócios de {site.cidade}.
       </p>
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <a href="#escolha" class="botao-principal text-lg">Ver o que serve para mim</a>
-        <a href={linkWhatsApp()} class="botao-secundario text-lg">Falar com o Carlos</a>
-      </div>
-      <p class="mt-6 text-[0.95rem] text-grafite">Feito em {site.cidade}. Já no ar: Nova FM 87,5 e o portal de notícias da rádio.</p>
+      <p class="mt-6 max-w-xl text-lg text-nevoa-escura">
+        Escolha o seu tipo de site abaixo. O preço está na tela, e você vê o layout pronto antes de pagar o restante.
+      </p>
     </div>
 
-    <!-- O momento característico: uma busca local em que o negócio aparece -->
-    <figure class="busca relative mx-auto w-full max-w-md" aria-label="Exemplo: busca por manicure perto de mim com o negócio aparecendo em primeiro">
-      <div class="rounded-[1.75rem] border border-tinta/10 bg-white p-4 shadow-[0_30px_60px_-30px_rgba(14,17,22,.35)] sm:p-5">
-        <div class="flex items-center gap-3 rounded-full border border-tinta/15 px-4 py-3">
-          <svg class="h-4 w-4 text-grafite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-          <span class="digitando">manicure perto de mim</span>
-        </div>
-        <div class="resultado mt-4 rounded-2xl border-2 border-lima bg-lima/10 p-4">
-          <p class="text-lg font-semibold">Studio da Ana · Manicure</p>
-          <p class="text-sm text-grafite">4,9 ★★★★★ (87) · Centro, {site.cidade}</p>
-          <p class="mt-1 text-sm text-lima-escura">Aberto · fecha às 19h</p>
-          <div class="mt-3 flex gap-2 text-sm font-medium">
-            <span class="rounded-full bg-tinta px-3 py-1.5 text-papel">WhatsApp</span>
-            <span class="rounded-full border border-tinta/20 px-3 py-1.5">Site</span>
-            <span class="rounded-full border border-tinta/20 px-3 py-1.5">Rotas</span>
-          </div>
-        </div>
-        <div class="mt-3 space-y-2 opacity-50" aria-hidden="true">
-          <div class="h-14 rounded-2xl bg-nevoa"></div>
-          <div class="h-14 rounded-2xl bg-nevoa"></div>
-        </div>
-      </div>
-      <figcaption class="mt-3 text-center text-sm text-grafite">Exemplo ilustrativo de busca no celular.</figcaption>
-    </figure>
-  </section>
+    <div class="conteudo pb-16 sm:pb-24">
+      <ul class="border-t border-white/15">
+        {tiers.map((t) => (
+          <li class="border-b border-white/15">
+            <details class="tier group" id={t.id}>
+              <summary class="grid cursor-pointer list-none grid-cols-[1fr_auto] items-end gap-x-6 gap-y-1 py-6 sm:py-8 [&::-webkit-details-marker]:hidden">
+                <span class="nome text-[2.3rem] font-bold leading-none tracking-tight sm:text-7xl lg:text-8xl">{t.nome}</span>
+                <span class="text-right">
+                  <span class="block text-sm text-nevoa-escura">a partir de</span>
+                  <span class="block whitespace-nowrap text-2xl font-bold text-lima sm:text-4xl">{t.aPartir}</span>
+                </span>
+                <span class="col-span-2 flex items-center justify-between gap-4 text-nevoa-escura sm:text-lg">
+                  {t.para}
+                  <span class="abrir flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 transition-transform group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                  </span>
+                </span>
+              </summary>
 
-  <!-- 2. Rótulos: mostrar que entendemos antes de propor -->
-  <section class="border-y border-nevoa bg-white/60">
-    <div class="conteudo py-16 lg:py-20">
-      <h2 class="max-w-2xl text-4xl sm:text-5xl">Se você vive de agenda e de indicação</h2>
-      <ul class="mt-10 grid gap-10 md:grid-cols-3">
-        {rotulos.map((r) => (
-          <li class="border-l-4 border-lima pl-6">
-            <p class="text-xl font-medium leading-snug">{r.fala}</p>
-            <p class="mt-3 text-grafite">{r.custo}</p>
+              <div class="grid gap-8 pb-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+                <div>
+                  <p class="text-nevoa-escura">{t.exemplos}.</p>
+                  <ul class="mt-5 space-y-3 text-lg">
+                    {t.entra.map((e) => (
+                      <li class="flex gap-3">
+                        <svg class="mt-1.5 h-4 w-4 shrink-0 text-lima" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 6.5" /></svg>
+                        {e}
+                      </li>
+                    ))}
+                  </ul>
+                  <p class="mt-5 font-medium text-lima">{t.prazo}</p>
+                </div>
+                <div class="space-y-3">
+                  {t.formas.map((f) => (
+                    <div class="rounded-2xl border border-white/20 p-5">
+                      <p class="text-sm text-nevoa-escura">{f.nome}</p>
+                      <p class="mt-1 text-2xl font-bold">{f.valor}</p>
+                      <p class="mt-1 text-sm text-nevoa-escura">{f.nota}</p>
+                    </div>
+                  ))}
+                  <a href={linkWhatsApp(`Oi, Carlos! Vi o site e quero conversar sobre o ${t.nome}.`)} class="botao-principal w-full text-lg">Quero o {t.nome}</a>
+                </div>
+              </div>
+            </details>
           </li>
         ))}
       </ul>
-      <div class="mt-12 max-w-3xl rounded-3xl bg-nevoa p-6 sm:p-8">
-        <p class="text-lg">
-          Você deve estar pensando que é mais alguém vendendo site que ninguém acessa. Justo. Por isso você vê o layout pronto antes de pagar o restante, e o site sai configurado para ser achado, não só para ficar bonito.
-        </p>
-      </div>
+      <p class="mt-8 text-nevoa-escura">
+        Não sabe qual é o seu? <a href={linkWhatsApp('Oi, Carlos! Não sei qual tipo de site serve para o meu negócio.')} class="text-papel underline decoration-lima decoration-2 underline-offset-4">Me conta o que você faz</a> e eu indico.
+      </p>
     </div>
   </section>
 
-  <!-- 3. Escolha guiada: 2 perguntas, 1 recomendação -->
-  <section id="escolha" class="conteudo scroll-mt-24 py-16 lg:py-24">
-    <div class="max-w-2xl">
-      <h2 class="text-4xl sm:text-5xl">Duas perguntas e você sabe o que serve para você</h2>
-      <p class="mt-4 text-lg text-grafite">Sem tabela comprida. Responda e veja o preço na hora.</p>
-    </div>
-
-    <escolha-guiada class="mt-10 block">
-      <script type="application/json" set:html={JSON.stringify(resultados)} />
-      <div class="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-14">
-        <div>
-          <fieldset data-pergunta="tipo">
-            <legend class="text-xl font-medium">Como é o seu negócio?</legend>
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              {[
-                ['autonomo', 'Trabalho sozinho', 'Manicure, personal, fotógrafo, diarista'],
-                ['empresa', 'Tenho empresa', 'Endereço, equipe, CNPJ'],
-                ['produtos', 'Vendo produtos', 'Quero vender pela internet'],
-                ['sobmedida', 'Preciso de um sistema', 'App, agenda com Pix, área de clientes'],
-              ].map(([valor, titulo, exemplo]) => (
-                <label class="opcao">
-                  <input type="radio" name="tipo" value={valor} class="sr-only" />
-                  <span class="font-medium">{titulo}</span>
-                  <span class="text-sm text-grafite">{exemplo}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset data-pergunta="pagamento" class="mt-8" hidden>
-            <legend class="text-xl font-medium">Como prefere pagar?</legend>
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-              <label class="opcao">
-                <input type="radio" name="pagamento" value="unico" class="sr-only" />
-                <span class="font-medium">Uma vez só</span>
-                <span class="text-sm text-grafite">O site fica na sua conta, sem mensalidade</span>
-              </label>
-              <label class="opcao">
-                <input type="radio" name="pagamento" value="cuidado" class="sr-only" />
-                <span class="font-medium">Menos agora, com cuidado mensal</span>
-                <span class="text-sm text-grafite">A gente mantém tudo no ar e faz as alterações</span>
-              </label>
-            </div>
-          </fieldset>
-        </div>
-
-        <div aria-live="polite">
-          <div data-vazio class="flex h-full min-h-64 items-center justify-center rounded-3xl border-2 border-dashed border-tinta/15 p-8 text-center text-grafite">
-            Sua recomendação aparece aqui.
-          </div>
-          <article data-resultado hidden class="escuro rounded-3xl bg-tinta p-7 text-papel sm:p-9">
-            <p class="text-sm text-nevoa-escura">Para você:</p>
-            <h3 data-nome class="mt-1 text-3xl"></h3>
-            <p data-preco class="mt-4 text-4xl font-bold tracking-tight"></p>
-            <p data-detalhe class="mt-2 text-nevoa-escura"></p>
-            <p data-prazo class="mt-4 font-medium text-lima"></p>
-            <ul data-itens class="mt-5 space-y-2.5"></ul>
-            <a data-cta class="botao-principal mt-8 w-full text-lg" href="#">Quero esse no WhatsApp</a>
-            <p class="mt-4 text-center text-sm text-nevoa-escura">Recebe muita mensagem? Dá para somar o Atendimento Automático depois.</p>
-          </article>
-        </div>
-      </div>
-    </escolha-guiada>
-  </section>
-
-  <!-- 4. A oferta de entrada, empilhada -->
-  <section class="border-y border-nevoa bg-white/60">
-    <div class="conteudo py-16 lg:py-24">
-      <div class="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
-        <div>
-          <h2 class="text-4xl sm:text-5xl">Agenda Cheia</h2>
-          <p class="mt-4 text-lg text-grafite">O site de quem trabalha sozinho em {site.cidade}, no ar em 7 dias. Cada parte resolve um problema que você já tem.</p>
-          <div class="mt-8 rounded-3xl bg-nevoa p-6">
-            <p class="text-grafite">Se fosse contratar cada parte separada: <s>{brl(valorPilha)}</s></p>
-            <p class="mt-2 text-5xl font-bold tracking-tight">{brl(1000)}</p>
-            <p class="mt-2 text-grafite">{brl(300)} para começar, {brl(700)} quando aprovar o layout.</p>
-            <p class="mt-4 text-[0.95rem] font-medium">Monto 4 por mês, para dar conta com qualidade.</p>
-          </div>
-        </div>
-        <div>
-          <table class="w-full text-left">
-            <caption class="sr-only">O que entra no Agenda Cheia e qual problema resolve</caption>
-            <thead><tr class="border-b-2 border-tinta"><th class="pb-3 pr-4 font-medium text-grafite">Problema</th><th class="pb-3 font-medium text-grafite">O que entra</th></tr></thead>
-            <tbody>
-              {pilha.map((l) => (
-                <tr class="border-b border-tinta/10 align-top"><th scope="row" class="py-4 pr-4 font-medium">“{l.problema}”</th><td class="py-4 text-grafite">{l.entra}</td></tr>
-              ))}
-            </tbody>
-          </table>
-          <h3 class="mt-10 text-xl">E mais três bônus</h3>
-          <ul class="mt-4 space-y-3">
-            {bonus.map((b) => (
-              <li class="flex items-baseline justify-between gap-4 border-b border-tinta/10 pb-3">
-                <span><strong class="font-medium">{b.nome}.</strong> <span class="text-grafite">{b.texto}</span></span>
-                <span class="shrink-0 text-sm text-grafite">vale {brl(b.valor)}</span>
-              </li>
-            ))}
-          </ul>
-          <div class="mt-10 grid gap-4 sm:grid-cols-2">
-            <div class="rounded-2xl border-2 border-tinta p-5">
-              <p class="font-semibold">Garantia Aprovou, Pagou</p>
-              <p class="mt-1 text-sm text-grafite">Os 70% só são cobrados depois que você aprova o layout.</p>
-            </div>
-            <div class="rounded-2xl border-2 border-tinta p-5">
-              <p class="font-semibold">Prazo ou desconto</p>
-              <p class="mt-1 text-sm text-grafite">No ar em 7 dias úteis, ou {brl(100)} a menos no restante.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5. Como aprova e paga: o risco sai das costas do cliente -->
+  <!-- Como fica pronto -->
   <section id="como-funciona" class="conteudo py-16 lg:py-24">
-    <h2 class="max-w-2xl text-4xl sm:text-5xl">Você só paga o restante quando aprovar</h2>
+    <h2 class="max-w-3xl text-4xl sm:text-5xl">Você só paga o restante quando aprovar</h2>
+    <p class="mt-4 max-w-2xl text-lg text-grafite">Talvez você esteja pensando que é mais um site que ninguém vai abrir. Por isso você vê tudo pronto antes, e o site sai configurado para ser achado.</p>
     <div class="mt-12 grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
       <ol class="space-y-8">
         {passos.map((p, i) => (
@@ -270,41 +182,64 @@ const { total, preenchidas, prazo } = site.fundadores;
     </div>
   </section>
 
-  <!-- 6. Padrão de visibilidade -->
-  <section class="escuro bg-tinta text-papel">
-    <div class="conteudo grid gap-10 py-16 lg:grid-cols-[1fr_1.2fr] lg:gap-16 lg:py-24">
+  <!-- Achado no Google -->
+  <section class="border-y border-nevoa bg-white/60">
+    <div class="conteudo grid items-center gap-12 py-16 lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-24">
       <div>
-        <h2 class="text-4xl sm:text-5xl">Feito para ser achado, em todo projeto</h2>
-        <p class="mt-4 text-lg text-nevoa-escura">Não é um extra. Todo site da Agiliza sai preparado para o Google, o Maps e as respostas de IA, como quando alguém pergunta "qual pet shop tem perto de mim".</p>
-        <p class="mt-6 text-sm text-nevoa-escura">Ninguém controla a posição no Google, então a gente não promete primeiro lugar. Promete o trabalho que pesa.</p>
+        <h2 class="text-4xl sm:text-5xl">Todo site sai pronto para ser achado</h2>
+        <p class="mt-4 text-lg text-grafite">Quando alguém pesquisa "manicure perto de mim" ou pergunta para uma IA qual pet shop tem no bairro, o Google e a IA escolhem entre os negócios que entendem. Em todos os tipos de site, eu faço este trabalho:</p>
+        <ul class="mt-6 space-y-3">
+          {visibilidade.map((v) => (
+            <li class="flex gap-3">
+              <svg class="mt-1 h-4 w-4 shrink-0 text-lima-escura" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 6.5" /></svg>
+              {v}
+            </li>
+          ))}
+        </ul>
+        <p class="mt-6 text-sm text-grafite">A posição no Google ninguém controla, então não prometo primeiro lugar.</p>
       </div>
-      <ul class="grid gap-4 sm:grid-cols-2">
-        {visibilidade.map((v) => (
-          <li class="flex gap-3 border-t border-white/15 pt-4">
-            <svg class="mt-1 h-4 w-4 shrink-0 text-lima" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 6.5" /></svg>
-            {v}
-          </li>
-        ))}
-      </ul>
+      <figure class="mx-auto w-full max-w-md" aria-label="Exemplo: busca por manicure perto de mim com o negócio aparecendo em primeiro">
+        <div class="rounded-[1.75rem] border border-tinta/10 bg-white p-4 shadow-[0_30px_60px_-30px_rgba(14,17,22,.35)] sm:p-5">
+          <div class="flex items-center gap-3 rounded-full border border-tinta/15 px-4 py-3">
+            <svg class="h-4 w-4 text-grafite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            <span>manicure perto de mim</span>
+          </div>
+          <div class="mt-4 rounded-2xl border-2 border-lima bg-lima/10 p-4">
+            <p class="text-lg font-semibold">Studio da Ana, manicure</p>
+            <p class="text-sm text-grafite">4,9 ★★★★★ (87) no Centro de {site.cidade}</p>
+            <p class="mt-1 text-sm text-lima-escura">Aberto até as 19h</p>
+            <div class="mt-3 flex gap-2 text-sm font-medium">
+              <span class="rounded-full bg-tinta px-3 py-1.5 text-papel">WhatsApp</span>
+              <span class="rounded-full border border-tinta/20 px-3 py-1.5">Site</span>
+              <span class="rounded-full border border-tinta/20 px-3 py-1.5">Rotas</span>
+            </div>
+          </div>
+          <div class="mt-3 space-y-2 opacity-50" aria-hidden="true">
+            <div class="h-14 rounded-2xl bg-nevoa"></div>
+            <div class="h-14 rounded-2xl bg-nevoa"></div>
+          </div>
+        </div>
+        <figcaption class="mt-3 text-center text-sm text-grafite">Exemplo ilustrativo.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- 7. Provas -->
+  <!-- Já no ar -->
   <section id="projetos" class="conteudo py-16 lg:py-24">
     <h2 class="text-4xl sm:text-5xl">Já no ar em {site.cidade}</h2>
-    <div class="mt-10 grid gap-x-10 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
-      {projetos.slice(0, 3).map((p) => (
-        <article class="border-t-2 border-tinta pt-5">
+    <div class="mt-10 grid gap-x-10 gap-y-10 md:grid-cols-2">
+      {provas.map((p) => (
+        <a href={p.link} class="group block border-t-2 border-tinta pt-5">
           <p class="text-sm font-medium text-lima-escura">{p.tipo}</p>
-          <h3 class="mt-1 text-2xl">{p.nome}</h3>
+          <h3 class="mt-1 text-3xl group-hover:underline group-hover:decoration-lima group-hover:decoration-4 group-hover:underline-offset-4">{p.nome}</h3>
           <p class="mt-2 text-grafite">{p.resumo}</p>
-          {p.link && <a href={p.link} class="mt-3 inline-block underline decoration-lima decoration-2 underline-offset-4">Ver {p.link.replace('https://', '')}</a>}
-        </article>
+          <p class="mt-3 text-sm font-medium">{p.link?.replace('https://', '')}</p>
+        </a>
       ))}
     </div>
   </section>
 
-  <!-- 8. Quem faz (foto e história do Carlos entram aqui) -->
+  <!-- Quem faz -->
   <section class="border-y border-nevoa bg-white/60">
     <div class="conteudo grid items-center gap-10 py-16 md:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-24">
       <div class="flex aspect-[4/5] items-center justify-center rounded-3xl border-2 border-dashed border-tinta/20 bg-nevoa p-6 text-center text-grafite">
@@ -313,14 +248,14 @@ const { total, preenchidas, prazo } = site.fundadores;
       <div>
         <h2 class="text-4xl sm:text-5xl">Quem faz o seu site</h2>
         <p class="mt-5 text-lg">Eu sou o Carlos, de {site.cidade}.</p>
-        <p class="mt-3 text-lg text-grafite">[História a escrever com você: de onde você veio, por que começou a Agiliza, o primeiro projeto que deu certo e o que você não aceita entregar.]</p>
-        <p class="mt-3 text-lg text-grafite">Quem conversa com você é quem constrói o seu site. Sem atendente, sem repasse.</p>
+        <p class="mt-3 text-lg text-grafite">[Sua história entra aqui, escrita junto com você.]</p>
+        <p class="mt-3 text-lg text-grafite">Quem conversa com você é quem constrói o seu site, do começo ao fim.</p>
         <a href={linkWhatsApp('Oi, Carlos! Vi o seu site e quero conversar sobre o meu negócio.')} class="botao-secundario mt-8 text-lg">Falar com o Carlos</a>
       </div>
     </div>
   </section>
 
-  <!-- 9. Objeções -->
+  <!-- Dúvidas -->
   <section id="duvidas" class="conteudo grid gap-10 py-16 lg:grid-cols-[1fr_2fr] lg:py-24">
     <h2 class="text-4xl sm:text-5xl">O que costumam perguntar</h2>
     <div class="divide-y divide-tinta/10 border-y border-tinta/10">
@@ -336,7 +271,7 @@ const { total, preenchidas, prazo } = site.fundadores;
     </div>
   </section>
 
-  <!-- 10. Fechamento: pergunta que pede "não" e prazo real -->
+  <!-- Fechamento -->
   <section class="escuro bg-tinta text-papel">
     <div class="conteudo py-20 lg:py-24">
       <h2 class="max-w-4xl text-5xl leading-[1.02] sm:text-6xl">Seria loucura ver como ficaria o seu?</h2>
@@ -348,86 +283,20 @@ const { total, preenchidas, prazo } = site.fundadores;
 </Layout>
 
 <style>
-  .opcao {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    cursor: pointer;
-    border-radius: 1.25rem;
-    border: 2px solid color-mix(in srgb, var(--color-tinta) 15%, transparent);
-    padding: 1rem 1.15rem;
-    transition: border-color 0.15s, background-color 0.15s;
+  /* O único gesto forte da página: o letreiro reage ao dedo e ao mouse, mostrando qual tipo está aberto. */
+  .tier .nome {
+    transition: color 0.2s;
   }
-  .opcao:hover {
-    border-color: var(--color-tinta);
+  .tier[open] .nome,
+  .tier summary:hover .nome {
+    color: var(--color-lima);
   }
-  .opcao:has(input:checked) {
-    border-color: var(--color-tinta);
-    background: color-mix(in srgb, var(--color-lima) 35%, transparent);
+  .tier summary:focus-visible {
+    outline: 3px solid var(--color-lima);
+    outline-offset: 4px;
+    border-radius: 0.5rem;
   }
-  .opcao:has(input:focus-visible) {
-    outline: 3px solid var(--color-tinta);
-    outline-offset: 2px;
-  }
-
-  /* O único movimento da página: a busca sendo digitada e o resultado aparecendo. */
-  .digitando {
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid var(--color-tinta);
-    animation: digitar 1.4s steps(21) 0.3s both, cursor 0.8s step-end 6 1.7s;
-    max-width: 21ch;
-  }
-  .resultado {
-    animation: surgir 0.5s ease-out 1.8s both;
-  }
-  @keyframes digitar { from { max-width: 0; } }
-  @keyframes cursor { 50% { border-color: transparent; } }
-  @keyframes surgir { from { opacity: 0; transform: translateY(8px); } }
   @media (prefers-reduced-motion: reduce) {
-    .digitando, .resultado { animation: none; }
-    .digitando { border-right: 0; }
+    .tier .nome { transition: none; }
   }
 </style>
-
-<script>
-  import { linkWhatsApp } from '../config';
-
-  type Resultado = { nome: string; preco: string; detalhe: string; prazo: string; itens: string[] };
-
-  class EscolhaGuiada extends HTMLElement {
-    connectedCallback() {
-      const resultados: Record<string, Resultado> = JSON.parse(this.querySelector('script[type="application/json"]')!.textContent!);
-      const perguntaPagamento = this.querySelector<HTMLFieldSetElement>('[data-pergunta="pagamento"]')!;
-      const vazio = this.querySelector<HTMLElement>('[data-vazio]')!;
-      const cartao = this.querySelector<HTMLElement>('[data-resultado]')!;
-      const campo = (nome: string) => cartao.querySelector<HTMLElement>(`[data-${nome}]`)!;
-
-      this.addEventListener('change', () => {
-        const tipo = this.querySelector<HTMLInputElement>('input[name="tipo"]:checked')?.value;
-        const pagamento = this.querySelector<HTMLInputElement>('input[name="pagamento"]:checked')?.value;
-        const precisaPagamento = tipo === 'autonomo' || tipo === 'empresa';
-        perguntaPagamento.hidden = !precisaPagamento;
-
-        const chave = precisaPagamento ? (pagamento ? `${tipo}-${pagamento}` : undefined) : tipo;
-        const r = chave ? resultados[chave] : undefined;
-        vazio.hidden = Boolean(r);
-        cartao.hidden = !r;
-        if (!r) return;
-
-        campo('nome').textContent = r.nome;
-        campo('preco').textContent = r.preco;
-        campo('detalhe').textContent = r.detalhe;
-        campo('prazo').textContent = r.prazo;
-        campo('itens').replaceChildren(
-          ...r.itens.map((item) => Object.assign(document.createElement('li'), { textContent: `✓ ${item}` })),
-        );
-        (campo('cta') as HTMLAnchorElement).href = linkWhatsApp(`Oi, Carlos! Fiz a escolha no site e o indicado foi o ${r.nome}. Quero conversar.`);
-        if (matchMedia('(max-width: 1023px)').matches) cartao.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
-      });
-    }
-  }
-
-  customElements.define('escolha-guiada', EscolhaGuiada);
-</script>
