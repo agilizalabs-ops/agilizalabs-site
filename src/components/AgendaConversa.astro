@@ -221,6 +221,11 @@ import { textoAceite } from '../data/conteudo';
         e.preventDefault();
         this.enviar();
       });
+      // Link direto para mandar a lead: agilizalabs.com.br/#agendar já abre a agenda.
+      const pelaUrl = () => location.hash === '#agendar' && !this.dialogo.open && this.abrir('', '');
+      addEventListener('hashchange', pelaUrl);
+      this.dialogo.addEventListener('close', () => location.hash === '#agendar' && history.replaceState(null, '', location.pathname + location.search));
+      pelaUrl();
     }
 
     private async abrir(plano: string, linkReserva: string) {
