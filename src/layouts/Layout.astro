@@ -8,9 +8,12 @@ import { site, linkWhatsApp } from '../config';
 interface Props {
   title: string;
   description: string;
+  /** Cabeçalho escuro, para páginas que abrem com uma seção escura. */
+  escuro?: boolean;
+  menu?: { href: string; texto: string }[];
 }
 
-const { title, description } = Astro.props;
+const { title, description, escuro = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, site.url).href;
 const imagem = new URL('/og-image.png', site.url).href;
 
@@ -31,7 +34,7 @@ const dadosEstruturados = {
   sameAs: [`https://instagram.com/${site.instagram}`],
 };
 
-const menu = [
+const menu = Astro.props.menu ?? [
   { href: '/#servicos', texto: 'Serviços' },
   { href: '/#projetos', texto: 'Projetos' },
   { href: '/#como-funciona', texto: 'Como funciona' },
@@ -68,24 +71,24 @@ const menu = [
       Pular para o conteúdo
     </a>
 
-    <header class="sticky top-0 z-40 border-b border-nevoa bg-papel/90 backdrop-blur">
+    <header class:list={['sticky top-0 z-40 border-b backdrop-blur', escuro ? 'escuro border-white/10 bg-tinta/90 text-papel' : 'border-nevoa bg-papel/90']}>
       <div class="conteudo flex h-16 items-center justify-between gap-4">
         <a href="/" class="block h-7 w-auto shrink-0 [&>svg]:h-full [&>svg]:w-auto" aria-label="Agiliza Labs, página inicial">
-          <Fragment set:html={logoClaro} />
+          <Fragment set:html={escuro ? logoEscuro : logoClaro} />
         </a>
 
         <nav aria-label="Principal" class="hidden items-center gap-7 text-[0.95rem] md:flex">
-          {menu.map((item) => <a href={item.href} class="text-grafite hover:text-tinta">{item.texto}</a>)}
+          {menu.map((item) => <a href={item.href} class:list={[escuro ? 'text-nevoa-escura hover:text-papel' : 'text-grafite hover:text-tinta']}>{item.texto}</a>)}
         </nav>
 
         <div class="flex items-center gap-2">
           <a href={linkWhatsApp()} class="botao-principal hidden px-5 py-2.5 text-[0.95rem] sm:inline-flex">Chamar no WhatsApp</a>
           <details class="group relative md:hidden">
-            <summary class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-tinta/20 [&::-webkit-details-marker]:hidden" aria-label="Abrir menu">
+            <summary class:list={["flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border [&::-webkit-details-marker]:hidden", escuro ? "border-white/25" : "border-tinta/20"]} aria-label="Abrir menu">
               <svg class="h-5 w-5 group-open:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
               <svg class="hidden h-5 w-5 group-open:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
             </summary>
-            <nav aria-label="Principal (celular)" class="absolute right-0 top-12 w-56 rounded-2xl border border-nevoa bg-papel p-2 shadow-lg">
+            <nav aria-label="Principal (celular)" class="absolute right-0 top-12 w-56 rounded-2xl border border-nevoa bg-papel p-2 text-tinta shadow-lg">
               {menu.map((item) => <a href={item.href} class="block rounded-xl px-4 py-3 hover:bg-nevoa">{item.texto}</a>)}
               <a href={linkWhatsApp()} class="mt-1 block rounded-xl bg-lima px-4 py-3 font-medium">Chamar no WhatsApp</a>
             </nav>
