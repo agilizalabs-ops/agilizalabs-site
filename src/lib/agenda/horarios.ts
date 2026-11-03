@@ -30,6 +30,8 @@ function dataLocal(ms: number) {
 
 /** Uma vaga é válida se cai num dia e horário da agenda, respeita a antecedência e não encosta em nada ocupado. */
 export function vagaValida(inicio: number, agora: number, ocupados: Intervalo[]) {
+  // Só minutos cheios: com segundos ou milissegundos, o mesmo horário viraria outro texto e escaparia da trava de horário único.
+  if (!Number.isInteger(inicio) || inicio % MIN !== 0) return false;
   const fim = inicio + agenda.duracaoMinutos * MIN;
   const local = new Date(inicio + agenda.fusoMinutos * MIN);
   const minutoDoDia = local.getUTCHours() * 60 + local.getUTCMinutes();
