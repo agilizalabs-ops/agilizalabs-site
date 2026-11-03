@@ -35,11 +35,23 @@ export interface Tier {
   formas: FormaDePagamento[];
 }
 
-/** Complemento dos tiers 1, 2 e 4: o atendente sai do site e vai para o WhatsApp do negócio. */
-const whatsappComIA: Opcional = {
+// Complementos dos tiers 1, 2 e 4: o atendente sai do site e vai para o WhatsApp do negócio.
+// Especificação e decisões em 01 Empresa/atendimento-whatsapp.md, no vault.
+
+/** Nível Essencial, para autônomos (Presença). */
+const whatsappEssencial: Opcional = {
   id: 'whatsapp-ia',
   nome: 'Atendimento no WhatsApp com IA',
-  texto: 'Responde no seu WhatsApp a qualquer hora: preço, horário, endereço e dúvidas. Agenda ou anota o pedido e passa para você quando precisa de gente. Pelo WhatsApp oficial, até 1.000 conversas por mês.',
+  texto: 'Responde no seu WhatsApp a qualquer hora: preço, horário, endereço e dúvidas, e passa a conversa para você quando precisa de gente. Pelo WhatsApp oficial, no seu número, até 300 conversas por mês, tudo incluso.',
+  setup: 800,
+  mensal: 197,
+};
+
+/** Nível Completo, para empresas (Institucional e E-commerce). */
+const whatsappCompleto: Opcional = {
+  id: 'whatsapp-ia',
+  nome: 'Atendimento no WhatsApp com IA',
+  texto: 'Responde no seu WhatsApp a qualquer hora: preço, horário, endereço e dúvidas. Agenda ou anota o pedido e passa para você quando precisa de gente. Pelo WhatsApp oficial, no seu número, até 1.000 conversas por mês, tudo incluso.',
   setup: 2500,
   mensal: 497,
 };
@@ -66,7 +78,7 @@ export const tiers: Tier[] = [
         setup: 800,
         mensal: 49,
       },
-      whatsappComIA,
+      whatsappEssencial,
     ],
     formas: [
       { nome: 'Pago uma vez', setup: 1000, nota: '30% para começar e 70% quando aprovar o layout. Alterações depois são cobradas à parte.' },
@@ -86,7 +98,7 @@ export const tiers: Tier[] = [
       'Textos revisados com você',
     ],
     noCuidado: ['Atendente com IA no site, treinado com os dados da sua empresa', 'Site sempre no ar e 3 alterações por mês'],
-    opcionais: [whatsappComIA],
+    opcionais: [whatsappCompleto],
     formas: [
       { nome: 'Pago uma vez', setup: 2400, nota: '30% para começar e 70% quando aprovar o layout. Alterações depois são cobradas à parte.' },
       { nome: 'Com Cuidado', setup: 1400, mensal: 149, nota: 'A mensalidade cobre hospedagem, o atendente com IA e o meu cuidado com o site.' },
@@ -105,7 +117,7 @@ export const tiers: Tier[] = [
       '1 hora de treinamento para você cadastrar sozinho',
     ],
     noCuidado: ['Atendente com IA no site, que responde dúvidas sobre os produtos'],
-    opcionais: [whatsappComIA],
+    opcionais: [whatsappCompleto],
     formas: [{ nome: 'Com Cuidado', setup: 2500, setupAte: 4000, mensal: 197, nota: 'Conforme o número de produtos. A plataforma você paga direto.' }],
   },
   {
