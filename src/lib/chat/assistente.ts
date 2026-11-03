@@ -27,11 +27,12 @@ export interface Config {
 export async function responder(historico: Mensagem[], config: Config): Promise<RespostaAssistente> {
   if (!config.chave) throw new Error('ANTHROPIC_API_KEY não configurada.');
   const esforco: Esforco = (ESFORCOS as readonly string[]).includes(config.esforco) ? (config.esforco as Esforco) : 'low';
-  const client = new Anthropic({ apiKey: config.chave, maxRetries: 1, timeout: 25_000 });
+  const client = new Anthropic({ apiKey: config.chave, maxRetries: 1, timeout: 60_000 });
 
   const resposta = await client.messages.parse({
     model: config.modelo,
-    max_tokens: 1500,
+    // O raciocínio da IA conta neste limite; com esforço alto ele precisa de folga.
+    max_tokens: 16000,
     system: [{ type: 'text', text: instrucoes(), cache_control: { type: 'ephemeral' } }],
     messages: historico,
     output_config: { effort: esforco, format: zodOutputFormat(Resposta) },

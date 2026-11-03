@@ -17,7 +17,7 @@
 	// Assistente com IA. Troque modelo e esforço aqui, sem mexer no código.
 	"vars": {
 		"IA_MODELO": "claude-haiku-5-5",
-		"IA_ESFORCO": "low",
+		"IA_ESFORCO": "xhigh",
 		"AVISOS_DE": "avisos@agilizalabs.com.br",
 		"AVISOS_PARA": "agilizalabs@gmail.com"
 	},
