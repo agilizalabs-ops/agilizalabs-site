@@ -29,7 +29,11 @@
 	// Avisos de contato novo e resumo semanal, para o Gmail que já recebe o contato@.
 	"send_email": [{ "name": "AVISOS", "destination_address": "agilizalabs@gmail.com" }],
 	// Proteção de custo: cada IP pode mandar até 20 mensagens por minuto.
-	"ratelimits": [{ "name": "LIMITE_CHAT", "namespace_id": "1001", "simple": { "limit": 20, "period": 60 } }],
+	"ratelimits": [
+		{ "name": "LIMITE_CHAT", "namespace_id": "1001", "simple": { "limit": 20, "period": 60 } },
+		// Agendamento: no máximo 3 tentativas por minuto por IP.
+		{ "name": "LIMITE_AGENDA", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } }
+	],
 	"triggers": {
 		// 06:00 UTC todo dia: apaga o que expirou. 11:00 UTC na segunda (08:00 em Brasília): resumo da semana.
 		"crons": ["0 6 * * *", "0 11 * * 1"]

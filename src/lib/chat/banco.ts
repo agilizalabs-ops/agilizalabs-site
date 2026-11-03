@@ -65,15 +65,45 @@ export interface NovoAgendamento {
   plano: string;
   nome: string;
   whatsapp: string;
-  eventoId: string;
 }
 
-export async function salvarAgendamento(db: D1Database, a: NovoAgendamento) {
-  const hoje = agora().toISOString();
-  await db
-    .prepare(`INSERT INTO agendamentos (id, criado_em, expira_em, inicio, formato, plano, nome, whatsapp, evento_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .bind(crypto.randomUUID(), hoje, daquiA(365), a.inicio, a.formato, a.plano, a.nome, a.whatsapp, a.eventoId)
-    .run();
+const digitos = (whatsapp: string) => whatsapp.replace(/\D/g, '');
+
+/** Já existe conversa futura marcada para este WhatsApp? Uma por número, para ninguém lotar a agenda. */
+export async function temAgendamentoFuturo(db: D1Database, whatsapp: string) {
+  const linha = await db
+    .prepare('SELECT 1 FROM agendamentos WHERE whatsapp_digitos = ? AND inicio > ? LIMIT 1')
+    .bind(digitos(whatsapp), agora().toISOString())
+    .first();
+  return linha !== null;
+}
+
+/**
+ * Reserva o horário antes de criar o evento no Google. O índice único em "inicio" faz a segunda
+ * pessoa no mesmo horário falhar aqui, mesmo que as duas tenham visto a vaga livre. Devolve o id ou null.
+ */
+export async function reservarHorario(db: D1Database, a: NovoAgendamento): Promise<string | null> {
+  const id = crypto.randomUUID();
+  try {
+    await db
+      .prepare(
+        `INSERT INTO agendamentos (id, criado_em, expira_em, inicio, formato, plano, nome, whatsapp, whatsapp_digitos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, agora().toISOString(), daquiA(365), a.inicio, a.formato, a.plano, a.nome, a.whatsapp, digitos(a.whatsapp))
+      .run();
+    return id;
+  } catch (erro) {
+    if (String(erro).includes('UNIQUE')) return null;
+    throw erro;
+  }
+}
+
+export async function confirmarReserva(db: D1Database, id: string, eventoId: string) {
+  await db.prepare('UPDATE agendamentos SET evento_id = ? WHERE id = ?').bind(eventoId, id).run();
+}
+
+export async function cancelarReserva(db: D1Database, id: string) {
+  await db.prepare('DELETE FROM agendamentos WHERE id = ?').bind(id).run();
 }
 
 export async function salvarAvaliacao(db: D1Database, conversaId: string, nota: 1 | -1) {
