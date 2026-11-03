@@ -4,6 +4,8 @@ import '../styles/global.css';
 import logoClaro from '../assets/agiliza-labs-horizontal.svg?raw';
 import logoEscuro from '../assets/agiliza-labs-negativo.svg?raw';
 import { site, linkWhatsApp } from '../config';
+import ChatAgiliza from '../components/ChatAgiliza.astro';
+import { tiers } from '../data/tiers';
 
 interface Props {
   title: string;
@@ -16,6 +18,9 @@ interface Props {
 const { title, description, escuro = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, site.url).href;
 const imagem = new URL('/og-image.png', site.url).href;
+
+const setups = tiers.flatMap((t) => t.formas.flatMap((f) => [f.setup, f.setupAte ?? f.setup]));
+const faixaDePreco = `R$ ${Math.min(...setups).toLocaleString('pt-BR')} a R$ ${Math.max(...setups).toLocaleString('pt-BR')}`;
 
 const dadosEstruturados = {
   '@context': 'https://schema.org',
@@ -30,15 +35,14 @@ const dadosEstruturados = {
   ...(site.cnpj && { taxID: site.cnpj }),
   address: { '@type': 'PostalAddress', addressLocality: site.cidade, addressRegion: site.uf, addressCountry: 'BR' },
   areaServed: site.regiao,
-  priceRange: 'R$ 197 a R$ 6.000',
+  priceRange: faixaDePreco,
   sameAs: [`https://instagram.com/${site.instagram}`],
 };
 
 const menu = Astro.props.menu ?? [
-  { href: '/#servicos', texto: 'Serviços' },
-  { href: '/#projetos', texto: 'Projetos' },
+  { href: '/#tipos', texto: 'Tipos de site' },
   { href: '/#como-funciona', texto: 'Como funciona' },
-  { href: '/#planos', texto: 'Planos' },
+  { href: '/#projetos', texto: 'Projetos' },
   { href: '/#duvidas', texto: 'Dúvidas' },
 ];
 ---
@@ -106,7 +110,7 @@ const menu = Astro.props.menu ?? [
         <div>
           <div class="h-8 w-auto [&>svg]:h-full [&>svg]:w-auto"><Fragment set:html={logoEscuro} /></div>
           <p class="mt-4 text-papel">{site.slogan}</p>
-          <p class="mt-1">Sites, apps e sistemas sob medida para pequenos negócios de {site.cidade} e região.</p>
+          <p class="mt-1">Sites com SEO profissional para negócios de {site.cidade} e região.</p>
         </div>
         <div>
           <h2 class="text-base font-medium text-papel">Contato</h2>
@@ -131,14 +135,6 @@ const menu = Astro.props.menu ?? [
       </div>
     </footer>
 
-    <a
-      href={linkWhatsApp()}
-      class="fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-lima text-tinta shadow-lg shadow-tinta/20 sm:hidden"
-      aria-label="Chamar a Agiliza Labs no WhatsApp"
-    >
-      <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z" />
-      </svg>
-    </a>
+    <ChatAgiliza />
   </body>
 </html>

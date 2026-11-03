@@ -1,0 +1,285 @@
+---
+// Assistente da Agiliza: chat com IA no canto da página.
+// Fala com /api/chat, /api/contato e /api/avaliacao. Voz pelo reconhecimento do próprio navegador.
+import { site } from '../config';
+import { textoAceite } from '../data/conteudo';
+
+const sugestoes = ['Quanto custa um site?', 'Qual é o tipo certo para mim?', 'Como funciona o pagamento?'];
+---
+
+<chat-agiliza data-whatsapp={site.whatsapp}>
+  <button type="button" data-abrir class="fixed bottom-4 right-4 z-50 flex h-14 items-center gap-2 rounded-full bg-lima px-5 font-medium text-tinta shadow-lg shadow-tinta/25 sm:bottom-6 sm:right-6" aria-expanded="false" aria-controls="chat-painel">
+    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z" /></svg>
+    <span class="hidden sm:inline">Tire sua dúvida</span>
+    <span class="sr-only sm:hidden">Abrir o assistente</span>
+  </button>
+
+  <section id="chat-painel" data-painel hidden role="dialog" aria-label="Assistente da Agiliza" class="fixed inset-x-0 bottom-0 z-50 flex h-[85dvh] flex-col overflow-hidden rounded-t-3xl border border-tinta/15 bg-papel text-tinta shadow-2xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[640px] sm:max-h-[85dvh] sm:w-[400px] sm:rounded-3xl">
+    <header class="escuro flex items-start justify-between gap-3 bg-tinta px-5 py-4 text-papel">
+      <div>
+        <p class="font-semibold">Assistente da Agiliza</p>
+        <p class="text-sm text-nevoa-escura">Uma IA que conhece os tipos de site e os preços. O Carlos responde no WhatsApp.</p>
+      </div>
+      <button type="button" data-fechar class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25" aria-label="Fechar o assistente">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </header>
+
+    <div data-mensagens class="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
+      <p class="bolha ia">Oi! Sou a IA da Agiliza. Posso te ajudar a escolher o tipo de site, ver preços ou entender como funciona. O que você faz?</p>
+      <div data-sugestoes class="flex flex-wrap gap-2">
+        {sugestoes.map((s) => <button type="button" class="sugestao" data-sugestao={s}>{s}</button>)}
+      </div>
+
+      <form data-contato hidden class="space-y-2 rounded-2xl border border-tinta/15 bg-white p-4" novalidate>
+        <p class="font-medium">O Carlos te manda a proposta no WhatsApp</p>
+        <input name="nome" autocomplete="name" required placeholder="Seu nome" class="campo" />
+        <input name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" required placeholder="WhatsApp com DDD" class="campo" />
+        <input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="E-mail" class="campo" />
+        <input name="tipoNegocio" list="tipos-negocio" autocomplete="organization-title" required placeholder="Seu negócio (ex.: manicure, oficina)" class="campo" />
+        <datalist id="tipos-negocio">
+          <option value="Autônomo de serviços"></option>
+          <option value="Empresa com endereço e equipe"></option>
+          <option value="Portal, rádio ou blog"></option>
+          <option value="Loja que vende produtos"></option>
+        </datalist>
+        <label class="flex items-start gap-2 text-sm text-grafite">
+          <input name="aceite" type="checkbox" class="mt-1 h-4 w-4 shrink-0 accent-tinta" />
+          <span>{textoAceite} <a href="/privacidade" class="underline" target="_blank">Política de privacidade</a>.</span>
+        </label>
+        <p data-erro-contato class="text-sm text-red-700" role="alert"></p>
+        <div class="flex gap-2 pt-1">
+          <button type="submit" class="botao-principal flex-1 py-2.5">Quero a proposta</button>
+          <button type="button" data-cancelar class="botao-secundario py-2.5">Agora não</button>
+        </div>
+      </form>
+
+      <div data-avaliacao hidden class="flex items-center justify-between rounded-2xl bg-nevoa px-4 py-2.5 text-sm">
+        <span>Esta conversa ajudou?</span>
+        <span class="flex gap-1">
+          <button type="button" data-nota="1" class="nota" aria-label="Ajudou">👍</button>
+          <button type="button" data-nota="-1" class="nota" aria-label="Não ajudou">👎</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="border-t border-tinta/10 px-4 pb-4 pt-3">
+      <div class="mb-2 flex gap-2 text-sm">
+        <a data-whatsapp-link href="#" target="_blank" rel="noopener" class="atalho">Falar com o Carlos</a>
+        <button type="button" data-pedir-contato class="atalho">Quero uma proposta</button>
+      </div>
+      <form data-enviar class="flex items-end gap-2">
+        <label class="sr-only" for="chat-texto">Sua mensagem</label>
+        <textarea id="chat-texto" data-texto rows="1" maxlength="800" placeholder="Escreva ou toque no microfone" class="campo max-h-32 min-h-11 flex-1 resize-none"></textarea>
+        <button type="button" data-microfone hidden class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-tinta/20" aria-label="Perguntar falando" aria-pressed="false">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+        </button>
+        <button type="submit" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-tinta text-lima" aria-label="Enviar">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </button>
+      </form>
+    </div>
+  </section>
+</chat-agiliza>
+
+<style>
+  .bolha { max-width: 85%; border-radius: 1.1rem; padding: 0.6rem 0.9rem; white-space: pre-line; line-height: 1.45; }
+  .bolha.ia { background: #fff; border: 1px solid color-mix(in srgb, var(--color-tinta) 10%, transparent); border-bottom-left-radius: 0.3rem; }
+  .bolha.voce { margin-left: auto; background: var(--color-tinta); color: var(--color-papel); border-bottom-right-radius: 0.3rem; }
+  .bolha.pensando { color: var(--color-grafite); }
+  .sugestao { border: 1px solid color-mix(in srgb, var(--color-tinta) 20%, transparent); border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.875rem; background: #fff; }
+  .sugestao:hover, .atalho:hover { border-color: var(--color-tinta); }
+  .atalho { border: 1px solid color-mix(in srgb, var(--color-tinta) 20%, transparent); border-radius: 999px; padding: 0.3rem 0.75rem; }
+  .campo { width: 100%; border: 1px solid color-mix(in srgb, var(--color-tinta) 20%, transparent); border-radius: 0.9rem; padding: 0.6rem 0.8rem; background: #fff; }
+  .nota { border-radius: 999px; padding: 0.2rem 0.5rem; font-size: 1.1rem; }
+  .nota:hover { background: #fff; }
+  [data-microfone][aria-pressed='true'] { background: var(--color-lima); border-color: var(--color-tinta); }
+</style>
+
+<script>
+  type Msg = { autor: 'ia' | 'voce'; texto: string };
+  const GUARDA = 'agiliza-chat';
+
+  function ler(): { conversaId?: string; msgs: Msg[] } {
+    try {
+      return JSON.parse(sessionStorage.getItem(GUARDA) ?? '') ?? { msgs: [] };
+    } catch {
+      return { msgs: [] };
+    }
+  }
+  function gravar(estado: { conversaId?: string; msgs: Msg[] }) {
+    try {
+      sessionStorage.setItem(GUARDA, JSON.stringify(estado));
+    } catch {
+      /* navegação privada: segue sem guardar */
+    }
+  }
+
+  class ChatAgiliza extends HTMLElement {
+    private estado = ler();
+    private $ = <T extends Element>(s: string) => this.querySelector<T>(s)!;
+    private painel = this.$<HTMLElement>('[data-painel]');
+    private abrir = this.$<HTMLButtonElement>('[data-abrir]');
+    private lista = this.$<HTMLElement>('[data-mensagens]');
+    private texto = this.$<HTMLTextAreaElement>('[data-texto]');
+    private formContato = this.$<HTMLFormElement>('[data-contato]');
+    private avaliacao = this.$<HTMLElement>('[data-avaliacao]');
+    private ocupado = false;
+    private avaliou = false;
+
+    connectedCallback() {
+      this.estado.msgs.forEach((m) => this.bolha(m));
+      if (this.estado.msgs.length) this.$('[data-sugestoes]').setAttribute('hidden', '');
+      this.atualizarWhatsapp();
+
+      this.abrir.addEventListener('click', () => this.alternar(true));
+      this.$('[data-fechar]').addEventListener('click', () => this.alternar(false));
+      this.painel.addEventListener('keydown', (e) => e.key === 'Escape' && this.alternar(false));
+      this.$('[data-enviar]').addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.enviar(this.texto.value);
+      });
+      this.texto.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.enviar(this.texto.value);
+        }
+      });
+      this.querySelectorAll<HTMLButtonElement>('[data-sugestao]').forEach((b) => b.addEventListener('click', () => this.enviar(b.dataset.sugestao!)));
+      this.$('[data-pedir-contato]').addEventListener('click', () => this.mostrarContato());
+      this.$('[data-cancelar]').addEventListener('click', () => (this.formContato.hidden = true));
+      this.formContato.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.enviarContato();
+      });
+      this.querySelectorAll<HTMLButtonElement>('[data-nota]').forEach((b) => b.addEventListener('click', () => this.avaliar(Number(b.dataset.nota))));
+      this.prepararVoz();
+    }
+
+    private alternar(aberto: boolean) {
+      this.painel.hidden = !aberto;
+      this.abrir.hidden = aberto;
+      this.abrir.setAttribute('aria-expanded', String(aberto));
+      if (aberto) this.texto.focus();
+      else this.abrir.focus();
+    }
+
+    private bolha(m: Msg) {
+      const p = document.createElement('p');
+      p.className = `bolha ${m.autor}`;
+      p.textContent = m.texto;
+      this.lista.append(p);
+      this.lista.scrollTop = this.lista.scrollHeight;
+      return p;
+    }
+
+    private registrar(m: Msg) {
+      this.estado.msgs.push(m);
+      gravar(this.estado);
+      this.bolha(m);
+      this.atualizarWhatsapp();
+    }
+
+    private async enviar(bruto: string) {
+      const mensagem = bruto.trim();
+      if (!mensagem || this.ocupado) return;
+      this.ocupado = true;
+      this.texto.value = '';
+      this.$('[data-sugestoes]').setAttribute('hidden', '');
+      this.registrar({ autor: 'voce', texto: mensagem });
+      const pensando = this.bolha({ autor: 'ia', texto: 'Pensando…' });
+      pensando.classList.add('pensando');
+
+      try {
+        const resposta = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversaId: this.estado.conversaId, mensagem }),
+        });
+        const dados = await resposta.json();
+        pensando.remove();
+        if (dados.conversaId) this.estado.conversaId = dados.conversaId;
+        this.registrar({ autor: 'ia', texto: dados.resposta ?? dados.erro ?? 'Algo deu errado. Tente de novo.' });
+        if (dados.oferecerContato) this.mostrarContato();
+        if (this.estado.msgs.filter((m) => m.autor === 'ia').length >= 3) this.pedirAvaliacao();
+      } catch {
+        pensando.remove();
+        this.registrar({ autor: 'ia', texto: 'Sem conexão agora. Tente de novo ou fale com o Carlos no WhatsApp.' });
+      } finally {
+        this.ocupado = false;
+      }
+    }
+
+    private mostrarContato() {
+      this.lista.append(this.formContato);
+      this.formContato.hidden = false;
+      this.lista.scrollTop = this.lista.scrollHeight;
+    }
+
+    private pedirAvaliacao() {
+      if (this.avaliou) return;
+      this.lista.append(this.avaliacao);
+      this.avaliacao.hidden = false;
+      this.lista.scrollTop = this.lista.scrollHeight;
+    }
+
+    private async enviarContato() {
+      const dados = Object.fromEntries(new FormData(this.formContato));
+      const erro = this.$('[data-erro-contato]');
+      erro.textContent = '';
+      const resposta = await fetch('/api/contato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...dados, aceite: dados.aceite === 'on', conversaId: this.estado.conversaId }),
+      }).catch(() => null);
+      const corpo = resposta ? await resposta.json().catch(() => ({})) : {};
+      if (!resposta?.ok) {
+        erro.textContent = corpo.erro ?? 'Não deu para enviar agora. Tente de novo.';
+        return;
+      }
+      this.formContato.hidden = true;
+      this.registrar({ autor: 'ia', texto: `Pronto, ${String(dados.nome).split(' ')[0]}! O Carlos vai te chamar no WhatsApp.` });
+      this.pedirAvaliacao();
+    }
+
+    private async avaliar(nota: number) {
+      this.avaliou = true;
+      this.avaliacao.hidden = true;
+      if (!this.estado.conversaId) return;
+      await fetch('/api/avaliacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversaId: this.estado.conversaId, nota }),
+      }).catch(() => null);
+    }
+
+    private atualizarWhatsapp() {
+      const ultimas = this.estado.msgs.filter((m) => m.autor === 'voce').slice(-3).map((m) => `- ${m.texto}`);
+      const texto = ultimas.length
+        ? `Oi, Carlos! Conversei com o assistente do site e quero continuar com você. Minhas perguntas:\n${ultimas.join('\n')}`
+        : 'Oi, Carlos! Vim pelo site e quero conversar.';
+      this.$<HTMLAnchorElement>('[data-whatsapp-link]').href = `https://wa.me/${this.dataset.whatsapp}?text=${encodeURIComponent(texto)}`;
+    }
+
+    private prepararVoz() {
+      const Reconhecimento = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+      if (!Reconhecimento) return;
+      const botao = this.$<HTMLButtonElement>('[data-microfone]');
+      botao.hidden = false;
+      const voz = new Reconhecimento();
+      voz.lang = 'pt-BR';
+      voz.interimResults = true;
+      voz.onresult = (e: any) => {
+        this.texto.value = Array.from(e.results as ArrayLike<any>).map((r) => r[0].transcript).join('');
+      };
+      voz.onend = () => botao.setAttribute('aria-pressed', 'false');
+      botao.addEventListener('click', () => {
+        if (botao.getAttribute('aria-pressed') === 'true') return voz.stop();
+        botao.setAttribute('aria-pressed', 'true');
+        voz.start();
+      });
+    }
+  }
+
+  customElements.define('chat-agiliza', ChatAgiliza);
+</script>
