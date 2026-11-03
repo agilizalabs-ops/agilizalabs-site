@@ -12,6 +12,7 @@ import appAoVivo from '../assets/projetos/aovivo.png';
 import appProgramacao from '../assets/projetos/programacao.png';
 import appNoticias from '../assets/projetos/noticias.png';
 import appPremios from '../assets/projetos/premios.png';
+import fotoCarlos from '../assets/carlos.jpg';
 
 const menu = [
   { href: '#tipos', texto: 'Tipos de site' },
@@ -104,7 +105,6 @@ const appTelas = [
                       </li>
                     ))}
                   </ul>
-                  {t.opcionais && <p class="mt-5 text-nevoa-escura">Opcional: {t.opcionais.join('; ')}.</p>}
                   <p class="mt-5 font-medium text-lima">{t.prazo}</p>
                 </div>
                 <div class="space-y-3">
@@ -118,6 +118,13 @@ const appTelas = [
                           {t.noCuidado.map((c) => <li>+ {c}</li>)}
                         </ul>
                       )}
+                    </div>
+                  ))}
+                  {t.opcionais?.map((o) => (
+                    <div class="rounded-2xl border border-dashed border-lima/60 p-5">
+                      <p class="text-sm text-lima">Opcional</p>
+                      <p class="mt-1 text-lg font-bold">{o.nome}</p>
+                      <p class="mt-1 text-sm text-nevoa-escura">{o.texto}</p>
                     </div>
                   ))}
                   <a href={linkWhatsApp(`Oi, Carlos! Vi o site e quero conversar sobre o ${t.nome}.`)} class="botao-principal w-full text-lg">Quero o {t.nome}</a>
@@ -266,13 +273,12 @@ const appTelas = [
   <!-- Quem faz -->
   <section class="border-y border-nevoa bg-white/60">
     <div class="conteudo grid items-center gap-10 py-16 md:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:py-24">
-      <div class="flex aspect-[4/5] items-center justify-center rounded-3xl border-2 border-dashed border-tinta/20 bg-nevoa p-6 text-center text-grafite">
-        Espaço para a sua foto profissional
-      </div>
+      <Image src={fotoCarlos} alt="Carlos Miguel Lisboa, idealizador da Agiliza Labs" width={720} class="aspect-square w-full rounded-3xl object-cover object-top" />
       <div>
         <h2 class="text-4xl sm:text-5xl">Quem faz o seu site</h2>
-        <p class="mt-5 text-lg">Eu sou o Carlos, de {site.cidade}.</p>
-        <p class="mt-3 text-lg text-grafite">[Sua história entra aqui, escrita junto com você.]</p>
+        <p class="mt-5 text-lg">Eu sou o Carlos, idealizador da Agiliza Labs.</p>
+        <p class="mt-3 text-lg text-grafite">Sou formado em Comércio Exterior e tenho mais de 6 anos de experiência com negócios internacionais, em contato com os mais variados modelos de negócio.</p>
+        <p class="mt-3 text-lg text-grafite">Com a tecnologia avançando cada vez mais rápido, vi na IA uma chance de ajudar pequenos empreendedores e empresas. Criei a Agiliza para construir o que o seu negócio precisa para crescer on-line, com curiosidade e muito cuidado na entrega.</p>
         <p class="mt-3 text-lg text-grafite">Quem conversa com você é quem constrói o seu site, do começo ao fim.</p>
         <a href={linkWhatsApp('Oi, Carlos! Vi o seu site e quero conversar sobre o meu negócio.')} class="botao-secundario mt-8 text-lg">Falar com o Carlos</a>
       </div>

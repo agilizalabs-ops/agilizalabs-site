@@ -21,7 +21,7 @@ export interface Tier {
   entra: string[];
   /** O que só vem no plano com Cuidado. */
   noCuidado?: string[];
-  opcionais?: string[];
+  opcionais?: { nome: string; texto: string }[];
   formas: FormaDePagamento[];
 }
 
@@ -38,8 +38,13 @@ export const tiers: Tier[] = [
       'Google Perfil criado ou ajustado',
       'Botão de WhatsApp com mensagem pronta e um QR code para o balcão',
     ],
-    noCuidado: ['Atendente com IA treinado com os dados do seu negócio', 'Site sempre no ar e 1 alteração por mês'],
-    opcionais: ['Agenda on-line com sinal por Pix'],
+    noCuidado: ['Atendente com IA treinado com os dados do seu negócio, até 300 conversas por mês', 'Site sempre no ar e 1 alteração por mês'],
+    opcionais: [
+      {
+        nome: 'Agenda com sinal por Pix',
+        texto: 'Sua cliente escolhe o horário no site e paga o sinal pelo Pix. Você liga o sinal nas épocas de agenda cheia. Valor combinado na conversa.',
+      },
+    ],
     formas: [
       { nome: 'Pago uma vez', setup: 1000, nota: '30% para começar e 70% quando aprovar o layout. Alterações depois são cobradas à parte.' },
       { nome: 'Com Cuidado', setup: 500, mensal: 97, nota: 'A mensalidade cobre hospedagem, o atendente com IA e o meu cuidado com o site.' },
@@ -75,7 +80,12 @@ export const tiers: Tier[] = [
       'Editorias, busca e notícias relacionadas',
       'Espaços para anunciantes',
     ],
-    opcionais: ['Robô com IA que busca as notícias oficiais da região e entrega o texto para a redação aprovar'],
+    opcionais: [
+      {
+        nome: 'Robô de notícias com IA',
+        texto: 'Busca as notícias oficiais da região, escreve a matéria e entrega para a redação aprovar. Valor combinado na conversa.',
+      },
+    ],
     formas: [{ nome: 'Projeto', setup: 3500, aPartirDe: true, nota: 'Valor fechado depois de uma conversa sobre a sua redação.' }],
   },
   {
