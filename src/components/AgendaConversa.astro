@@ -1,64 +1,93 @@
 ---
 // Agenda da conversa sobre o plano. Abre a partir de qualquer elemento com [data-abrir-agenda]
-// (o montador do plano e o chat). Se a agenda não carregar, o link original (WhatsApp) segue valendo.
+// (o montador do plano, o fechamento da página e o chat). Se a agenda não carregar, o link original (WhatsApp) segue valendo.
+// Fluxo: sugestão do horário mais próximo -> ou um dia no calendário (seg a sex) -> horário -> formato e dados -> confirmar.
 import { textoAceite } from '../data/conteudo';
 ---
 
 <agenda-conversa>
-  <dialog data-dialogo class="m-auto w-[min(100%-2rem,34rem)] rounded-3xl bg-papel p-0 text-tinta shadow-2xl backdrop:bg-tinta/60" aria-labelledby="agenda-titulo">
-    <div class="flex max-h-[90dvh] flex-col">
+  <dialog data-dialogo class="m-auto w-[min(100%-1.5rem,36rem)] overflow-hidden rounded-3xl bg-papel p-0 text-tinta shadow-2xl backdrop:bg-tinta/70 backdrop:backdrop-blur-sm" aria-labelledby="agenda-titulo">
+    <div class="flex max-h-[92dvh] flex-col">
       <header class="escuro flex items-start justify-between gap-3 bg-tinta px-6 py-5 text-papel">
         <div>
           <h2 id="agenda-titulo" class="text-xl font-semibold">Agendar conversa sobre o plano</h2>
           <p data-plano class="mt-1 text-sm text-nevoa-escura"></p>
         </div>
-        <button type="button" data-fechar class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25" aria-label="Fechar">
+        <button type="button" data-fechar class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 transition-colors hover:border-lima hover:text-lima" aria-label="Fechar">
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
         </button>
       </header>
 
-      <div class="overflow-y-auto px-6 py-5">
-        <p data-carregando class="text-grafite">Buscando os horários livres…</p>
+      <div data-rolagem class="overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+        <div data-carregando class="space-y-4" aria-label="Buscando os horários livres">
+          <div class="ag-esqueleto h-28"></div>
+          <div class="ag-esqueleto h-56"></div>
+        </div>
         <div data-falhou hidden class="space-y-3">
           <p data-falhou-texto class="text-grafite"></p>
           <a data-whatsapp class="botao-principal" href="#" target="_blank" rel="noopener">Combinar pelo WhatsApp</a>
         </div>
 
-        <form data-form hidden class="space-y-5" novalidate>
-          <fieldset>
-            <legend class="font-medium">Próximos horários livres</legend>
-            <div data-proximos class="mt-3 grid gap-2 sm:grid-cols-3"></div>
-            <button type="button" data-outros class="mt-3 text-sm underline decoration-lima decoration-2 underline-offset-4">Ver outros dias</button>
-            <div data-calendario hidden class="mt-4">
-              <div data-dias class="flex gap-2 overflow-x-auto pb-2"></div>
-              <div data-horas class="mt-2 grid grid-cols-4 gap-2"></div>
+        <form id="agenda-form" data-form hidden class="space-y-7" novalidate>
+          <section aria-labelledby="ag-sugestao-titulo">
+            <h3 id="ag-sugestao-titulo" class="sr-only">Horário sugerido</h3>
+            <button type="button" data-sugestao class="ag-sugestao">
+              <span class="flex items-center gap-2 text-sm text-nevoa-escura">
+                <span class="ag-pulso" aria-hidden="true"></span>
+                Horário mais próximo
+              </span>
+              <span class="mt-2 flex items-end justify-between gap-4">
+                <span>
+                  <span data-sugestao-dia class="capitalize-first block text-lg text-papel"></span>
+                  <span data-sugestao-hora class="block text-5xl font-bold leading-none tracking-tight text-lima"></span>
+                </span>
+                <span data-sugestao-acao class="ag-sugestao-acao">Quero esse</span>
+              </span>
+            </button>
+          </section>
+
+          <section aria-labelledby="ag-calendario-titulo">
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 id="ag-calendario-titulo" class="font-medium">Ou escolha o dia</h3>
+              <p data-mes class="text-sm capitalize text-grafite"></p>
             </div>
-          </fieldset>
+            <div class="ag-calendario mt-3">
+              <div class="ag-semana" aria-hidden="true"><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span></div>
+              <div data-dias class="ag-semana"></div>
+            </div>
+            <div data-horas class="ag-horas" aria-live="polite">
+              <p class="text-sm text-grafite">Os dias com ponto verde têm horário livre. Toque em um.</p>
+            </div>
+          </section>
 
-          <fieldset>
-            <legend class="font-medium">Como prefere conversar?</legend>
-            <div data-formatos class="mt-3 grid gap-2"></div>
-          </fieldset>
+          <div data-etapa-dados hidden class="ag-entrada space-y-7">
+            <fieldset>
+              <legend class="font-medium">Como prefere conversar?</legend>
+              <div data-formatos class="mt-3 grid gap-2 sm:grid-cols-2"></div>
+            </fieldset>
 
-          <fieldset class="space-y-2">
-            <legend class="mb-3 font-medium">Seus dados</legend>
-            <input name="nome" autocomplete="name" required placeholder="Seu nome" class="campo-agenda" />
-            <input name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" required placeholder="WhatsApp com DDD" class="campo-agenda" />
-            <input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="E-mail" class="campo-agenda" />
-            <input name="tipoNegocio" autocomplete="organization-title" required placeholder="Seu negócio (ex.: manicure, oficina)" class="campo-agenda" />
-            <label class="flex items-start gap-2 pt-1 text-sm text-grafite">
-              <input name="aceite" type="checkbox" class="mt-1 h-4 w-4 shrink-0 accent-tinta" />
-              <span>{textoAceite} <a href="/privacidade" class="underline" target="_blank">Política de privacidade</a>.</span>
-            </label>
-          </fieldset>
-
-          <p data-erro class="text-sm text-red-700" role="alert"></p>
-          <button type="submit" data-confirmar class="botao-principal w-full text-lg disabled:opacity-60" disabled>Escolha um horário</button>
+            <fieldset class="space-y-2">
+              <legend class="mb-3 font-medium">Seus dados</legend>
+              <input name="nome" autocomplete="name" required placeholder="Seu nome" class="ag-campo" />
+              <input name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" required placeholder="WhatsApp com DDD" class="ag-campo" />
+              <input name="email" type="email" inputmode="email" autocomplete="email" required placeholder="E-mail" class="ag-campo" />
+              <input name="tipoNegocio" autocomplete="organization-title" required placeholder="Seu negócio (ex.: manicure, oficina)" class="ag-campo" />
+              <label class="flex items-start gap-2 pt-1 text-sm text-grafite">
+                <input name="aceite" type="checkbox" class="mt-1 h-4 w-4 shrink-0 accent-tinta" />
+                <span>{textoAceite} <a href="/privacidade" class="underline" target="_blank">Política de privacidade</a>.</span>
+              </label>
+            </fieldset>
+          </div>
         </form>
 
-        <div data-pronto hidden class="space-y-4" aria-live="polite">
-          <p class="text-2xl font-semibold">Conversa marcada ✓</p>
-          <p data-pronto-texto class="text-lg"></p>
+        <div data-pronto hidden class="ag-entrada space-y-4" aria-live="polite">
+          <p class="flex items-center gap-3 text-2xl font-semibold">
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-lima" aria-hidden="true">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5" /></svg>
+            </span>
+            Conversa marcada
+          </p>
+          <p data-pronto-texto class="text-lg capitalize-first"></p>
           <p class="text-grafite">O Carlos te chama no WhatsApp para confirmar.</p>
           <div class="flex flex-col gap-2 sm:flex-row">
             <a data-google class="botao-principal" target="_blank" rel="noopener" href="#">Adicionar à minha agenda</a>
@@ -66,27 +95,94 @@ import { textoAceite } from '../data/conteudo';
           </div>
         </div>
       </div>
+
+      <footer data-rodape hidden class="border-t border-tinta/10 bg-papel px-5 py-4 sm:px-6">
+        <p data-erro class="mb-2 text-sm text-red-700 empty:hidden" role="alert"></p>
+        <div class="flex items-center justify-between gap-4">
+          <p class="min-w-0 text-sm leading-tight">
+            <span class="block text-grafite">Seu horário</span>
+            <span data-resumo class="block truncate font-semibold">Escolha acima</span>
+          </p>
+          <button type="submit" form="agenda-form" data-confirmar class="botao-principal shrink-0 disabled:cursor-not-allowed disabled:opacity-50" disabled>Confirmar</button>
+        </div>
+      </footer>
     </div>
   </dialog>
 </agenda-conversa>
 
-<style>
-  .campo-agenda { width: 100%; border: 1px solid color-mix(in srgb, var(--color-tinta) 20%, transparent); border-radius: 0.9rem; padding: 0.65rem 0.85rem; background: #fff; }
-  .vaga { border: 2px solid color-mix(in srgb, var(--color-tinta) 15%, transparent); border-radius: 0.9rem; padding: 0.55rem 0.6rem; background: #fff; text-align: center; font-size: 0.95rem; }
-  .vaga:hover { border-color: var(--color-tinta); }
-  .vaga[aria-pressed='true'] { border-color: var(--color-tinta); background: var(--color-lima); font-weight: 600; }
-  .dia { flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--color-tinta) 20%, transparent); border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.9rem; background: #fff; white-space: nowrap; }
-  .dia[aria-pressed='true'] { background: var(--color-tinta); color: var(--color-papel); }
-  .formato { display: flex; align-items: center; gap: 0.6rem; border: 2px solid color-mix(in srgb, var(--color-tinta) 15%, transparent); border-radius: 0.9rem; padding: 0.65rem 0.85rem; background: #fff; cursor: pointer; }
-  .formato:has(input:checked) { border-color: var(--color-tinta); background: color-mix(in srgb, var(--color-lima) 35%, #fff); }
+<style is:global>
+  agenda-conversa dialog[open] { animation: ag-abrir 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  agenda-conversa dialog[open]::backdrop { animation: ag-fundo 0.28s ease-out; }
+  @keyframes ag-abrir { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
+  @keyframes ag-fundo { from { opacity: 0; } }
+
+  .ag-esqueleto { border-radius: 1.25rem; background: linear-gradient(90deg, var(--color-nevoa) 25%, #f9f9f5 50%, var(--color-nevoa) 75%); background-size: 200% 100%; animation: ag-brilho 1.2s linear infinite; }
+  @keyframes ag-brilho { to { background-position: -200% 0; } }
+
+  /* Sugestão: cartão escuro com o horário em lima, pulsando até alguém escolher. */
+  .ag-sugestao { display: block; width: 100%; text-align: left; border-radius: 1.5rem; padding: 1.25rem 1.35rem; background: var(--color-tinta); color: var(--color-papel); border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; animation: ag-brilho-borda 2.4s ease-in-out infinite; }
+  .ag-sugestao:hover { transform: translateY(-2px); }
+  .ag-sugestao[aria-pressed='true'] { border-color: var(--color-lima); animation: none; }
+  @keyframes ag-brilho-borda { 0%, 100% { box-shadow: 0 0 0 0 rgb(198 241 53 / 0); } 50% { box-shadow: 0 0 0 6px rgb(198 241 53 / 0.28); } }
+  .ag-pulso { position: relative; width: 0.6rem; height: 0.6rem; border-radius: 999px; background: var(--color-lima); }
+  .ag-pulso::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--color-lima); animation: ag-onda 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+  @keyframes ag-onda { 75%, 100% { transform: scale(2.8); opacity: 0; } }
+  .ag-sugestao[aria-pressed='true'] .ag-pulso::after { animation: none; }
+  .ag-sugestao-acao { flex-shrink: 0; border-radius: 999px; background: var(--color-lima); color: var(--color-tinta); padding: 0.55rem 1.1rem; font-weight: 600; font-size: 0.95rem; }
+  .ag-sugestao[aria-pressed='true'] .ag-sugestao-acao { background: var(--color-papel); }
+
+  /* Calendário: só dias úteis, cinco colunas. */
+  .ag-calendario { border-radius: 1.25rem; background: #fff; padding: 0.75rem; box-shadow: 0 1px 0 rgb(14 17 22 / 0.06), 0 10px 30px -18px rgb(14 17 22 / 0.35); }
+  .ag-semana { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.35rem; }
+  .ag-semana > span { padding-bottom: 0.4rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-grafite); }
+  .ag-dia { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 3.4rem; padding-bottom: 0.45rem; border-radius: 0.9rem; font-weight: 600; font-variant-numeric: tabular-nums; transition: background-color 0.15s, color 0.15s, transform 0.15s; }
+  .ag-dia small { font-size: 0.62rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1; color: var(--color-grafite); }
+  .ag-dia:disabled { color: rgb(14 17 22 / 0.22); cursor: default; }
+  .ag-dia:disabled small { color: inherit; }
+  .ag-dia:not(:disabled) { background: color-mix(in srgb, var(--color-lima) 14%, #fff); }
+  .ag-dia:not(:disabled)::after { content: ''; position: absolute; bottom: 0.45rem; width: 0.3rem; height: 0.3rem; border-radius: 999px; background: var(--color-lima-escura); }
+  .ag-dia:not(:disabled):hover { background: color-mix(in srgb, var(--color-lima) 45%, #fff); transform: translateY(-1px); }
+  .ag-dia[data-hoje]:not([aria-pressed='true']) { box-shadow: inset 0 0 0 1.5px rgb(14 17 22 / 0.25); }
+  .ag-dia[aria-pressed='true'] { background: var(--color-tinta); color: var(--color-lima); }
+  .ag-dia[aria-pressed='true'] small { color: var(--color-nevoa-escura); }
+  .ag-dia[aria-pressed='true']::after { background: var(--color-lima); }
+
+  .ag-horas { margin-top: 1rem; min-height: 2.5rem; }
+  .ag-horas h4 { margin: 0.9rem 0 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-grafite); }
+  .ag-horas h4:first-of-type { margin-top: 0; }
+  .ag-grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
+  .ag-hora { border-radius: 0.8rem; padding: 0.6rem 0; background: #fff; border: 1.5px solid rgb(14 17 22 / 0.12); font-weight: 600; font-variant-numeric: tabular-nums; transition: border-color 0.15s, background-color 0.15s, transform 0.15s; }
+  .ag-hora:hover { border-color: var(--color-tinta); transform: translateY(-1px); }
+  .ag-hora[aria-pressed='true'] { background: var(--color-lima); border-color: var(--color-tinta); }
+
+  .ag-formato { display: flex; align-items: center; gap: 0.6rem; border: 1.5px solid rgb(14 17 22 / 0.12); border-radius: 0.9rem; padding: 0.7rem 0.85rem; background: #fff; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+  .ag-formato:has(input:checked) { border-color: var(--color-tinta); background: color-mix(in srgb, var(--color-lima) 30%, #fff); }
+  .ag-campo { width: 100%; border: 1.5px solid rgb(14 17 22 / 0.12); border-radius: 0.9rem; padding: 0.7rem 0.9rem; background: #fff; transition: border-color 0.15s; }
+  .ag-campo:focus { border-color: var(--color-tinta); }
+
+  .ag-entrada { animation: ag-entrar 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  @keyframes ag-entrar { from { opacity: 0; transform: translateY(8px); } }
+  .capitalize-first::first-letter { text-transform: uppercase; }
+
+  @media (prefers-reduced-motion: reduce) {
+    agenda-conversa *, agenda-conversa *::before, agenda-conversa *::after, agenda-conversa dialog[open], agenda-conversa dialog::backdrop { animation: none !important; transition: none !important; }
+  }
 </style>
 
 <script>
   type Horario = { inicio: string; hora: string; rotulo?: string };
   type Dia = { data: string; rotulo: string; horarios: Horario[] };
 
+  const DIA_MS = 86_400_000;
+  const FUSO_MS = -3 * 3_600_000; // Brasília, sem horário de verão
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
   const $ = <T extends Element>(raiz: ParentNode, s: string) => raiz.querySelector<T>(s)!;
-  const botao = (texto: string, classe: string) => Object.assign(document.createElement('button'), { type: 'button', className: classe, textContent: texto });
+  const botao = (classe: string) => Object.assign(document.createElement('button'), { type: 'button', className: classe });
+  const movimento = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+  /** "AAAA-MM-DD" em UTC ao meio-dia: soma de dias e dia da semana sem tropeçar em fuso. */
+  const meioDia = (data: string) => Date.parse(`${data}T12:00:00Z`);
+  const comoData = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
   function conversaDoChat() {
     try {
@@ -100,9 +196,11 @@ import { textoAceite } from '../data/conteudo';
     private dialogo = $<HTMLDialogElement>(this, '[data-dialogo]');
     private form = $<HTMLFormElement>(this, '[data-form]');
     private confirmar = $<HTMLButtonElement>(this, '[data-confirmar]');
+    private sugestao = $<HTMLButtonElement>(this, '[data-sugestao]');
     private plano = '';
     private escolhido: Horario | null = null;
-    private dias: Dia[] = [];
+    private proximo: Horario | null = null;
+    private dias = new Map<string, Dia>();
 
     connectedCallback() {
       document.addEventListener('click', (e) => {
@@ -112,7 +210,13 @@ import { textoAceite } from '../data/conteudo';
         this.abrir(gatilho.dataset.plano ?? '', (gatilho as HTMLAnchorElement).href);
       });
       $(this, '[data-fechar]').addEventListener('click', () => this.dialogo.close());
-      $(this, '[data-outros]').addEventListener('click', () => $(this, '[data-calendario]').toggleAttribute('hidden'));
+      this.dialogo.addEventListener('click', (e) => e.target === this.dialogo && this.dialogo.close());
+      this.sugestao.addEventListener('click', () => {
+        if (!this.proximo) return;
+        const data = comoData(Date.parse(this.proximo.inicio) + FUSO_MS);
+        this.abrirDia(data, false);
+        this.escolher(this.proximo);
+      });
       this.form.addEventListener('submit', (e) => {
         e.preventDefault();
         this.enviar();
@@ -121,9 +225,9 @@ import { textoAceite } from '../data/conteudo';
 
     private async abrir(plano: string, linkReserva: string) {
       this.plano = plano;
-      $(this, '[data-plano]').textContent = plano ? `Seu plano: ${plano}` : 'Escolha um horário de 30 minutos.';
+      $(this, '[data-plano]').textContent = plano ? `Seu plano: ${plano}` : '15 minutos para ver como ficaria o seu site.';
       $<HTMLAnchorElement>(this, '[data-whatsapp]').href = linkReserva?.startsWith('https://wa.me') ? linkReserva : `https://wa.me/5547984182023`;
-      for (const s of ['[data-form]', '[data-falhou]', '[data-pronto]']) $(this, s).setAttribute('hidden', '');
+      for (const s of ['[data-form]', '[data-falhou]', '[data-pronto]', '[data-rodape]', '[data-etapa-dados]']) $(this, s).setAttribute('hidden', '');
       $(this, '[data-carregando]').removeAttribute('hidden');
       this.dialogo.showModal();
       await this.carregar();
@@ -134,45 +238,38 @@ import { textoAceite } from '../data/conteudo';
         const resposta = await fetch('/api/agenda/horarios');
         const dados = await resposta.json();
         if (!resposta.ok) throw new Error(dados.erro);
-        this.dias = dados.dias;
-        this.montar(dados.proximos, dados.formatos);
+        if (!dados.dias.length) throw new Error('sem horários');
+        this.dias = new Map((dados.dias as Dia[]).map((d) => [d.data, d]));
+        this.montar(dados.proximos[0], dados.formatos);
         $(this, '[data-erro]').textContent = aviso;
         $(this, '[data-carregando]').setAttribute('hidden', '');
         this.form.removeAttribute('hidden');
-      } catch {
+        $(this, '[data-rodape]').removeAttribute('hidden');
+      } catch (erro) {
         $(this, '[data-carregando]').setAttribute('hidden', '');
-        $(this, '[data-falhou-texto]').textContent = 'A agenda on-line não abriu agora. Combine o horário direto com o Carlos:';
+        $(this, '[data-falhou-texto]').textContent =
+          String(erro).includes('sem horários') ? 'A agenda está cheia nas próximas duas semanas. Combine um horário direto com o Carlos:' : 'A agenda on-line não abriu agora. Combine o horário direto com o Carlos:';
         $(this, '[data-falhou]').removeAttribute('hidden');
       }
     }
 
-    private montar(proximos: Horario[], formatos: string[]) {
+    private montar(proximo: Horario, formatos: string[]) {
       this.escolhido = null;
-      this.atualizarBotao();
-      const lista = $(this, '[data-proximos]');
-      lista.replaceChildren(...proximos.map((h) => this.vaga(h, h.rotulo!)));
-      if (!proximos.length) lista.textContent = 'Sem horários livres nos próximos dias. Combine pelo WhatsApp.';
-
-      const dias = $(this, '[data-dias]');
-      dias.replaceChildren(
-        ...this.dias.map((d, i) => {
-          const b = botao(d.rotulo, 'dia');
-          b.setAttribute('aria-pressed', String(i === 0));
-          b.addEventListener('click', () => {
-            dias.querySelectorAll('.dia').forEach((x) => x.setAttribute('aria-pressed', 'false'));
-            b.setAttribute('aria-pressed', 'true');
-            this.horasDoDia(d);
-          });
-          return b;
-        }),
-      );
-      if (this.dias[0]) this.horasDoDia(this.dias[0]);
+      this.proximo = proximo;
+      const [dia, hora] = [proximo.rotulo!.split(', ').slice(0, 2).join(', '), proximo.hora];
+      $(this, '[data-sugestao-dia]').textContent = dia;
+      $(this, '[data-sugestao-hora]').textContent = hora;
+      this.sugestao.setAttribute('aria-label', `Escolher o horário mais próximo: ${proximo.rotulo}`);
+      this.montarCalendario();
+      $(this, '[data-horas]').replaceChildren(Object.assign(document.createElement('p'), { className: 'text-sm text-grafite', textContent: 'Os dias com ponto verde têm horário livre. Toque em um.' }));
+      this.marcar();
 
       const caixa = $(this, '[data-formatos]');
+      if (caixa.childElementCount) return; // mantém a escolha de quem já preencheu
       caixa.replaceChildren(
         ...formatos.map((f, i) => {
           const rotulo = document.createElement('label');
-          rotulo.className = 'formato';
+          rotulo.className = 'ag-formato';
           rotulo.innerHTML = `<input type="radio" name="formato" class="accent-tinta" ${i === 0 ? 'checked' : ''}><span></span>`;
           (rotulo.querySelector('input') as HTMLInputElement).value = f;
           rotulo.querySelector('span')!.textContent = f;
@@ -181,25 +278,96 @@ import { textoAceite } from '../data/conteudo';
       );
     }
 
-    private horasDoDia(d: Dia) {
-      $(this, '[data-horas]').replaceChildren(...d.horarios.map((h) => this.vaga({ ...h, rotulo: `${d.rotulo}, ${h.hora}` }, h.hora)));
+    /** Semanas de seg a sex, da semana de hoje até a do último dia com vaga. Dias sem vaga ficam apagados. */
+    private montarCalendario() {
+      const hoje = comoData(Date.now() + FUSO_MS);
+      const datas = [...this.dias.keys()];
+      const semanaDe = (data: string) => meioDia(data) - ((new Date(meioDia(data)).getUTCDay() + 6) % 7) * DIA_MS;
+      const inicio = semanaDe(hoje);
+      const fim = semanaDe(datas[datas.length - 1]) + 4 * DIA_MS;
+
+      const celulas: HTMLButtonElement[] = [];
+      let mesAnterior = -1;
+      for (let t = inicio; t <= fim; t += DIA_MS) {
+        const d = new Date(t);
+        if (d.getUTCDay() === 0 || d.getUTCDay() === 6) continue;
+        const data = comoData(t);
+        const vagas = this.dias.get(data);
+        const b = botao('ag-dia');
+        b.dataset.data = data;
+        if (data === hoje) b.dataset.hoje = '';
+        const novoMes = d.getUTCMonth() !== mesAnterior && mesAnterior !== -1;
+        mesAnterior = d.getUTCMonth();
+        b.innerHTML = `${novoMes ? `<small>${MESES[d.getUTCMonth()].slice(0, 3)}</small>` : ''}<span>${d.getUTCDate()}</span>`;
+        if (vagas) {
+          b.setAttribute('aria-label', `${vagas.rotulo}: ${vagas.horarios.length} horários livres`);
+          b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', () => this.abrirDia(data, true));
+        } else {
+          b.disabled = true;
+          b.setAttribute('aria-label', `${d.getUTCDate()} de ${MESES[d.getUTCMonth()]}: sem horário`);
+        }
+        celulas.push(b);
+      }
+      $(this, '[data-dias]').replaceChildren(...celulas);
+
+      const meses = [...new Set(celulas.map((c) => MESES[Number(c.dataset.data!.slice(5, 7)) - 1]))];
+      $(this, '[data-mes]').textContent = `${meses.join(' – ')} ${datas[datas.length - 1].slice(0, 4)}`;
     }
 
-    private vaga(h: Horario, texto: string) {
-      const b = botao(texto, 'vaga');
-      b.dataset.inicio = h.inicio;
-      b.setAttribute('aria-pressed', String(this.escolhido?.inicio === h.inicio));
-      b.addEventListener('click', () => {
-        this.escolhido = h;
-        this.querySelectorAll('.vaga').forEach((x) => x.setAttribute('aria-pressed', String((x as HTMLElement).dataset.inicio === h.inicio)));
-        this.atualizarBotao();
-      });
-      return b;
+    private abrirDia(data: string, rolar: boolean) {
+      const dia = this.dias.get(data);
+      if (!dia) return;
+      this.querySelectorAll<HTMLButtonElement>('.ag-dia[aria-pressed]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.data === data)));
+      const painel = $(this, '[data-horas]');
+      const grupos = [
+        ['Manhã', dia.horarios.filter((h) => h.hora < '12:00')],
+        ['Tarde', dia.horarios.filter((h) => h.hora >= '12:00')],
+      ] as const;
+      const filhos: Element[] = [];
+      for (const [nome, horarios] of grupos) {
+        if (!horarios.length) continue;
+        filhos.push(Object.assign(document.createElement('h4'), { textContent: `${nome} · ${dia.rotulo}` }));
+        const grade = document.createElement('div');
+        grade.className = 'ag-grade';
+        grade.replaceChildren(
+          ...horarios.map((h) => {
+            const b = botao('ag-hora');
+            b.textContent = h.hora;
+            b.dataset.inicio = h.inicio;
+            b.addEventListener('click', () => this.escolher({ ...h, rotulo: `${dia.rotulo}, ${h.hora}` }));
+            return b;
+          }),
+        );
+        filhos.push(grade);
+      }
+      const corpo = document.createElement('div');
+      corpo.className = 'ag-entrada';
+      corpo.replaceChildren(...filhos);
+      painel.replaceChildren(corpo);
+      this.marcar();
+      if (rolar) painel.scrollIntoView({ behavior: movimento(), block: 'nearest' });
     }
 
-    private atualizarBotao() {
+    private escolher(h: Horario) {
+      this.escolhido = h;
+      this.marcar();
+      const dados = $(this, '[data-etapa-dados]');
+      const primeiraVez = dados.hidden;
+      dados.removeAttribute('hidden');
+      $(this, '[data-erro]').textContent = '';
+      // Leva a pessoa para o próximo passo só na primeira escolha; depois ela já sabe onde está.
+      if (primeiraVez) requestAnimationFrame(() => dados.scrollIntoView({ behavior: movimento(), block: 'start' }));
+    }
+
+    /** Sincroniza o estado escolhido na sugestão, nos horários e no rodapé. */
+    private marcar() {
+      const inicio = this.escolhido?.inicio;
+      this.sugestao.setAttribute('aria-pressed', String(!!inicio && inicio === this.proximo?.inicio));
+      $(this, '[data-sugestao-acao]').textContent = inicio && inicio === this.proximo?.inicio ? 'Escolhido ✓' : 'Quero esse';
+      this.querySelectorAll<HTMLElement>('.ag-hora').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.inicio === inicio)));
+      $(this, '[data-resumo]').textContent = this.escolhido?.rotulo ?? 'Escolha acima';
       this.confirmar.disabled = !this.escolhido;
-      this.confirmar.textContent = this.escolhido ? `Confirmar ${this.escolhido.rotulo}` : 'Escolha um horário';
     }
 
     private async enviar() {
@@ -208,14 +376,20 @@ import { textoAceite } from '../data/conteudo';
       const erro = $(this, '[data-erro]');
       erro.textContent = '';
       this.confirmar.disabled = true;
+      this.confirmar.textContent = 'Marcando…';
       const resposta = await fetch('/api/agenda/agendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...dados, aceite: dados.aceite === 'on', inicio: this.escolhido.inicio, plano: this.plano, conversaId: conversaDoChat() }),
       }).catch(() => null);
       const corpo = resposta ? await resposta.json().catch(() => ({})) : {};
+      this.confirmar.textContent = 'Confirmar';
       if (!resposta?.ok) {
-        if (corpo.ocupado) return this.carregar(corpo.erro);
+        if (corpo.ocupado) {
+          await this.carregar(corpo.erro);
+          $(this, '[data-rolagem]').scrollTo({ top: 0, behavior: movimento() });
+          return;
+        }
         erro.textContent = corpo.erro ?? 'Não deu para marcar agora. Tente de novo.';
         this.confirmar.disabled = false;
         return;
@@ -238,7 +412,9 @@ import { textoAceite } from '../data/conteudo';
       $<HTMLAnchorElement>(this, '[data-ics]').href = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
       $(this, '[data-pronto-texto]').textContent = `${r.quando}. ${r.formato}.`;
       this.form.setAttribute('hidden', '');
+      $(this, '[data-rodape]').setAttribute('hidden', '');
       $(this, '[data-pronto]').removeAttribute('hidden');
+      $(this, '[data-rolagem]').scrollTo({ top: 0 });
     }
   }
 
