@@ -19,7 +19,9 @@
 		"IA_MODELO": "claude-haiku-5-5",
 		"IA_ESFORCO": "xhigh",
 		"AVISOS_DE": "avisos@agilizalabs.com.br",
-		"AVISOS_PARA": "agilizalabs@gmail.com"
+		"AVISOS_PARA": "agilizalabs@gmail.com",
+		// Agenda do Google onde caem as conversas marcadas pelo site (compartilhada com a conta de serviço).
+		"AGENDA_ID": "agilizalabs@gmail.com"
 	},
 	"d1_databases": [
 		{ "binding": "DB", "database_name": "agilizalabs-chat", "database_id": "2ce486e6-061c-4f78-81b2-16a14bcbb44f", "migrations_dir": "migrations" }

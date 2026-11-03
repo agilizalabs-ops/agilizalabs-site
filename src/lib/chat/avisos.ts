@@ -46,6 +46,26 @@ export function avisarContato(env: Env, c: NovoContato) {
   );
 }
 
+export function avisarAgendamento(env: Env, a: { quando: string; formato: string; plano: string; nome: string; whatsapp: string; email: string; tipoNegocio: string }) {
+  const whatsapp = a.whatsapp.replace(/\D/g, '');
+  return enviar(
+    env,
+    `Conversa marcada: ${a.nome}, ${a.quando}`,
+    [
+      `Quando: ${a.quando} (horário de Brasília)`,
+      `Formato: ${a.formato}`,
+      `Plano montado no site: ${a.plano || '(não montou)'}`,
+      '',
+      `Nome: ${a.nome}`,
+      `WhatsApp: ${a.whatsapp}  ->  https://wa.me/${whatsapp.startsWith('55') ? whatsapp : `55${whatsapp}`}`,
+      `E-mail: ${a.email}`,
+      `Tipo de negócio: ${a.tipoNegocio}`,
+      '',
+      'O evento já está no seu Google Agenda. Mande uma mensagem confirmando.',
+    ].join('\n'),
+  );
+}
+
 const MOTIVO_LEGIVEL: Record<string, string> = {
   preco: 'Preço',
   qual_tier: 'Qual tipo de site',
@@ -88,6 +108,7 @@ export function enviarResumo(env: Env, r: Awaited<ReturnType<typeof resumoDaSema
       '',
       `Conversas: ${conversas}`,
       `Viraram contato (conversão): ${contatos} (${pct(contatos, conversas)})`,
+      `Conversas sobre o plano agendadas pelo site: ${r.agendamentos}`,
       `Resolvidas sem você (deflexão): ${n(r.totais.sem_ajuda)} (${pct(n(r.totais.sem_ajuda), conversas)})`,
       `Satisfação: ${positivas} positivas, ${negativas} negativas (${pct(positivas, positivas + negativas)} positivas)`,
       `Tempo médio de resposta da IA: ${respostas ? (n(r.totais.ms) / respostas / 1000).toFixed(1) : '-'} s`,

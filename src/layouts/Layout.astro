@@ -5,6 +5,7 @@ import logoClaro from '../assets/agiliza-labs-horizontal.svg?raw';
 import logoEscuro from '../assets/agiliza-labs-negativo.svg?raw';
 import { site, linkWhatsApp } from '../config';
 import ChatAgiliza from '../components/ChatAgiliza.astro';
+import AgendaConversa from '../components/AgendaConversa.astro';
 import { tiers } from '../data/tiers';
 
 interface Props {
@@ -136,5 +137,6 @@ const menu = Astro.props.menu ?? [
     </footer>
 
     <ChatAgiliza />
+    <AgendaConversa />
   </body>
 </html>

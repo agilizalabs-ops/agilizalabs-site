@@ -59,6 +59,23 @@ export async function salvarContato(db: D1Database, c: NovoContato) {
   ]);
 }
 
+export interface NovoAgendamento {
+  inicio: string;
+  formato: string;
+  plano: string;
+  nome: string;
+  whatsapp: string;
+  eventoId: string;
+}
+
+export async function salvarAgendamento(db: D1Database, a: NovoAgendamento) {
+  const hoje = agora().toISOString();
+  await db
+    .prepare(`INSERT INTO agendamentos (id, criado_em, expira_em, inicio, formato, plano, nome, whatsapp, evento_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), hoje, daquiA(365), a.inicio, a.formato, a.plano, a.nome, a.whatsapp, a.eventoId)
+    .run();
+}
+
 export async function salvarAvaliacao(db: D1Database, conversaId: string, nota: 1 | -1) {
   await db.prepare('UPDATE conversas SET csat = ? WHERE id = ?').bind(nota, conversaId).run();
 }
@@ -74,12 +91,13 @@ export async function apagarExpirados(db: D1Database) {
   await db.batch([
     db.prepare('DELETE FROM conversas WHERE expira_em < ?').bind(hoje),
     db.prepare('DELETE FROM contatos WHERE expira_em < ?').bind(hoje),
+    db.prepare('DELETE FROM agendamentos WHERE expira_em < ?').bind(hoje),
   ]);
 }
 
 export async function resumoDaSemana(db: D1Database) {
   const desde = new Date(Date.now() - 7 * DIA).toISOString();
-  const [totais, motivos, naoSoube, lembrar] = await db.batch([
+  const [totais, motivos, naoSoube, lembrar, agendados] = await db.batch([
     db
       .prepare(
         `SELECT COUNT(*) AS conversas, SUM(virou_contato) AS contatos, SUM(nao_soube = 0 AND virou_contato = 0) AS sem_ajuda,
@@ -95,6 +113,7 @@ export async function resumoDaSemana(db: D1Database) {
        WHERE CAST(julianday('now') - julianday(criado_em) AS INTEGER) % 90 BETWEEN 83 AND 89
        AND julianday('now') - julianday(criado_em) > 30 ORDER BY criado_em`,
     ),
+    db.prepare('SELECT COUNT(*) AS n FROM agendamentos WHERE criado_em >= ?').bind(desde),
   ]);
-  return { totais: totais.results[0] as Record<string, number | null>, motivos: motivos.results, naoSoube: naoSoube.results, lembrar: lembrar.results };
+  return { totais: totais.results[0] as Record<string, number | null>, motivos: motivos.results, naoSoube: naoSoube.results, lembrar: lembrar.results, agendamentos: Number((agendados.results[0] as { n: number }).n) };
 }
