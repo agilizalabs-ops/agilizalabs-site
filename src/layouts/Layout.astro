@@ -18,7 +18,8 @@ interface Props {
 
 const { title, description, escuro = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, site.url).href;
-const imagem = new URL('/og-image.png', site.url).href;
+// ?v= muda a cada nova og-image, para WhatsApp e redes buscarem a imagem de novo em vez de usar o cache
+const imagem = new URL('/og-image.png?v=2', site.url).href;
 
 const setups = tiers.flatMap((t) => t.formas.flatMap((f) => [f.setup, f.setupAte ?? f.setup]));
 const faixaDePreco = `R$ ${Math.min(...setups).toLocaleString('pt-BR')} a R$ ${Math.max(...setups).toLocaleString('pt-BR')}`;
@@ -68,6 +69,8 @@ const menu = Astro.props.menu ?? [
     <meta property="og:image" content={imagem} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="Agiliza Labs: Agilize o que trava." />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json" set:html={JSON.stringify(dadosEstruturados)} />
   </head>
