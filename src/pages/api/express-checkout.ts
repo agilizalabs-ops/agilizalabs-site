@@ -6,6 +6,8 @@ import { express } from '../../data/tiers';
 
 export const prerender = false;
 
+// Etiqueta de origem (utm): minúsculas, só letras, números, _ e -, até 40. Qualquer outra coisa vira null.
+const etiqueta = (v: unknown) => (typeof v === 'string' && /^[a-z0-9_-]{1,40}$/.test(v.trim().toLowerCase()) ? v.trim().toLowerCase() : null);
 const texto = (v: unknown, min: number, max: number) => (typeof v === 'string' && v.trim().length >= min && v.trim().length <= max ? v.trim() : null);
 
 // Cria o pedido do Express e devolve a URL do checkout da InfinitePay.
@@ -32,7 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
     return Response.json({ erro: 'As vagas desta semana acabaram. Novas vagas abrem na segunda-feira.' }, { status: 409 });
   }
 
-  const pedido = await criarPedido(env.DB, { negocio: negocio!, cidade: cidade!, whatsapp: digitos, email: email!, maps: dados.maps === true, ip });
+  const pedido = await criarPedido(env.DB, { negocio: negocio!, cidade: cidade!, whatsapp: digitos, email: email!, maps: dados.maps === true, ip, origem: etiqueta(dados.origem), campanha: etiqueta(dados.campanha) });
 
   try {
     const url = await new InfinitePay(env.INFINITEPAY_HANDLE).criarCheckout({

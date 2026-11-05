@@ -425,6 +425,20 @@ const dadosEstruturados = {
   });
   dialogo.addEventListener('close', () => clearInterval(vigia));
 
+  // De onde a pessoa veio (?utm_source=instagram&utm_campaign=...). Guardado na chegada para sobreviver
+  // a uma ida ao exemplo e volta; o placar do Hermes usa para o custo por venda de cada canal.
+  function origemDaVisita() {
+    const url = new URLSearchParams(location.search);
+    const daUrl = { origem: url.get('utm_source'), campanha: url.get('utm_campaign') };
+    try {
+      if (daUrl.origem) sessionStorage.setItem('express_origem', JSON.stringify(daUrl));
+      return JSON.parse(sessionStorage.getItem('express_origem') ?? 'null') ?? daUrl;
+    } catch {
+      return daUrl;
+    }
+  }
+  origemDaVisita();
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     retorno.hidden = true;
@@ -444,6 +458,7 @@ const dadosEstruturados = {
           email: email.value,
           maps: maps.checked,
           aceite: aceite.checked,
+          ...origemDaVisita(),
         }),
       });
       const dados = await resposta.json();

@@ -22,6 +22,9 @@ export interface NovoPedidoExpress {
   email: string;
   maps: boolean;
   ip: string;
+  /** utm_source e utm_campaign do link (só [a-z0-9_-]); null quando chegou direto. */
+  origem: string | null;
+  campanha: string | null;
 }
 
 export interface PedidoExpress extends NovoPedidoExpress {
@@ -70,10 +73,10 @@ export async function criarPedido(db: D1Database, p: NovoPedidoExpress): Promise
   const pedido = { ...p, id: `express-${crypto.randomUUID()}`, valorCentavos: valorDoPedido(p.maps), codigo: novoCodigo() };
   await db
     .prepare(
-      `INSERT INTO express_pedidos (id, criado_em, negocio, cidade, whatsapp, email, maps, valor_centavos, ip, aceite_texto, codigo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO express_pedidos (id, criado_em, negocio, cidade, whatsapp, email, maps, valor_centavos, ip, aceite_texto, codigo, origem, campanha)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(pedido.id, new Date().toISOString(), p.negocio, p.cidade, p.whatsapp, p.email, p.maps ? 1 : 0, pedido.valorCentavos, p.ip, textoAceiteExpress, pedido.codigo)
+    .bind(pedido.id, new Date().toISOString(), p.negocio, p.cidade, p.whatsapp, p.email, p.maps ? 1 : 0, pedido.valorCentavos, p.ip, textoAceiteExpress, pedido.codigo, p.origem, p.campanha)
     .run();
   return pedido;
 }
