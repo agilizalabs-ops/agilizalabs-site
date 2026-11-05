@@ -26,13 +26,17 @@
 	"d1_databases": [
 		{ "binding": "DB", "database_name": "agilizalabs-chat", "database_id": "2ce486e6-061c-4f78-81b2-16a14bcbb44f", "migrations_dir": "migrations" }
 	],
+	// Fotos e logos enviados pelos clientes do Agiliza Express. O Worker express-sites lê o mesmo namespace.
+	"kv_namespaces": [{ "binding": "EXPRESS_FOTOS", "id": "07f81e1971254de888ca90f289204a83" }],
 	// Avisos de contato novo e resumo semanal, para o Gmail que já recebe o contato@.
 	"send_email": [{ "name": "AVISOS", "destination_address": "agilizalabs@gmail.com" }],
 	// Proteção de custo: cada IP pode mandar até 20 mensagens por minuto.
 	"ratelimits": [
 		{ "name": "LIMITE_CHAT", "namespace_id": "1001", "simple": { "limit": 20, "period": 60 } },
 		// Agendamento: no máximo 3 tentativas por minuto por IP.
-		{ "name": "LIMITE_AGENDA", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } }
+		{ "name": "LIMITE_AGENDA", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } },
+		// Área de envio do Express: salvamento automático, fotos, status e domínio. Contado por pedido, não por IP (operadora com CGNAT).
+		{ "name": "LIMITE_EXPRESS", "namespace_id": "1003", "simple": { "limit": 120, "period": 60 } }
 	],
 	"triggers": {
 		// 06:00 UTC todo dia: apaga o que expirou. 11:00 UTC na segunda (08:00 em Brasília): resumo da semana.

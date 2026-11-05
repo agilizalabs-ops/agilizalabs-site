@@ -24,6 +24,8 @@ export interface NovoCheckout {
   itens: ItemCheckout[];
   cliente?: ClienteCheckout;
   urlRetorno: string;
+  /** Aviso de pagamento da InfinitePay. Não tem assinatura: confirme sempre com consultarPagamento. */
+  urlWebhook?: string;
 }
 
 export interface ConsultaPagamento {
@@ -46,7 +48,7 @@ export class InfinitePay {
   }
 
   /** Cria o link de pagamento e devolve a URL do checkout. */
-  async criarCheckout({ pedido, itens, cliente, urlRetorno }: NovoCheckout): Promise<string> {
+  async criarCheckout({ pedido, itens, cliente, urlRetorno, urlWebhook }: NovoCheckout): Promise<string> {
     if (itens.length === 0) throw new Error('O checkout precisa de pelo menos 1 item.');
     for (const item of itens) {
       if (!Number.isInteger(item.valorCentavos) || item.valorCentavos <= 0) {
@@ -58,6 +60,7 @@ export class InfinitePay {
       handle: this.handle,
       order_nsu: pedido,
       redirect_url: urlRetorno,
+      ...(urlWebhook && { webhook_url: urlWebhook }),
       items: itens.map((item) => ({
         description: item.descricao,
         price: item.valorCentavos,

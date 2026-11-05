@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { InfinitePay } from '../../lib/infinitepay';
-import { criarPedido, vagasRestantes } from '../../lib/express';
+import { criarPedido, vagasRestantes, cookieDoPedido } from '../../lib/express';
 import { express } from '../../data/tiers';
 
 export const prerender = false;
@@ -43,8 +43,9 @@ export const POST: APIRoute = async ({ request }) => {
       ],
       cliente: { nome: negocio!, email: email!, telefone: `+55${digitos}` },
       urlRetorno: new URL('/express/retorno', request.url).href,
+      urlWebhook: new URL('/api/express-webhook', request.url).href,
     });
-    return Response.json({ url });
+    return Response.json({ url, pedido: pedido.id }, { headers: { 'Set-Cookie': cookieDoPedido(pedido.codigo) } });
   } catch (erro) {
     console.error(erro);
     return Response.json({ erro: 'Não conseguimos abrir o pagamento agora. Tente de novo em instantes.' }, { status: 502 });

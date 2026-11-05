@@ -1,0 +1,641 @@
+---
+// Área de envio do Express: depois de pagar, o cliente monta o conteúdo do site aqui, sem WhatsApp.
+// Link secreto por pedido; salva sozinho a cada alteração; no fim, avisa o Carlos para rodar /criar-sites-97.
+import { env } from 'cloudflare:workers';
+import Layout from '../../../layouts/Layout.astro';
+import { lerPedidoPorCodigo } from '../../../lib/express';
+import { envioInicial, lerEnvio, ramos, diasDaSemana, MAX_FOTOS } from '../../../lib/express-envio';
+import { express } from '../../../data/tiers';
+import { linkWhatsApp } from '../../../config';
+
+export const prerender = false;
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+Astro.response.headers.set('Cache-Control', 'no-store');
+
+const codigo = Astro.params.codigo ?? '';
+const pedido = await lerPedidoPorCodigo(env.DB, codigo);
+const envio = pedido?.pagoEm ? await lerEnvio(env.DB, pedido.id) : null;
+const dados = envio?.dados ?? (pedido ? envioInicial(pedido) : null);
+const enviado = Boolean(envio?.enviadoEm);
+if (!pedido) Astro.response.status = 404;
+
+const exemplosFrase: Record<string, string> = {
+  beleza: 'Ex.: Unhas impecáveis por três semanas.',
+  servicos: 'Ex.: Elétrica residencial sem dor de cabeça.',
+  comida: 'Ex.: O xis mais pedido do bairro.',
+};
+const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116'];
+---
+
+<Layout title="Monte seu site | Agiliza Express" description="Área de envio do Agiliza Express." menu={[]} semAssistente>
+  <section class="conteudo envio">
+    {!pedido || !pedido.pagoEm ? (
+      <div class="aviso-centro">
+        <h1>{pedido ? 'Ainda não confirmamos o seu pagamento' : 'Link inválido'}</h1>
+        <p>{pedido ? 'Assim que o pagamento cair, esta página libera sozinha. Atualize em alguns instantes.' : 'Confira se copiou o link inteiro. Se não achar, fale com a gente.'}</p>
+        <a class="btn btn-lima" href={linkWhatsApp('Oi! Meu link do Agiliza Express não abriu.')}>Falar com a gente</a>
+      </div>
+    ) : enviado ? (
+      <div class="aviso-centro">
+        <p class="eyebrow">Tudo recebido ✓</p>
+        <h1>Agora é com a gente, {dados!.nome}!</h1>
+        <p>Em até {express.prazoHorasUteis} horas úteis você recebe no WhatsApp o link da prévia do seu site. Lá mesmo você aprova ou pede 1 ajuste.</p>
+      </div>
+    ) : (
+      <form id="envio" class="assistente" novalidate data-codigo={codigo} data-etapa={Math.min(envio?.etapa ?? 1, 5)} data-max-fotos={MAX_FOTOS}>
+        <script type="application/json" id="dados-iniciais" set:html={JSON.stringify(dados).replace(/</g, '\\u003c')} />
+
+        <header class="cabeca">
+          <p class="eyebrow">Monte seu site · {pedido.negocio}</p>
+          <div class="progresso" aria-hidden="true"><i id="barra"></i></div>
+          <div class="linha-status"><span id="etapa-texto">Etapa 1 de 4</span><span id="salvo" role="status" aria-live="polite">Salva sozinho</span></div>
+        </header>
+
+        <!-- 1 -->
+        <fieldset class="etapa" data-etapa="1">
+          <legend>Seu negócio</legend>
+          <p class="ajuda">Leva uns 5 minutos no total. Tudo fica salvo: pode parar e voltar por este mesmo link.</p>
+          <div class="campo"><label for="nome">Nome como aparece no site</label><input id="nome" data-campo="nome" type="text" maxlength="80" autocomplete="organization" /></div>
+          <div class="campo">
+            <span class="rotulo">Seu ramo</span>
+            <div class="opcoes">
+              {Object.entries(ramos).map(([valor, texto]) => (
+                <label class="opcao"><input type="radio" name="ramo" value={valor} data-campo="ramo" /><span>{texto}</span></label>
+              ))}
+            </div>
+          </div>
+          <div class="campo">
+            <label for="frase">Em uma frase, o que você faz de melhor?</label>
+            <input id="frase" data-campo="frase" type="text" maxlength="140" placeholder="Ex.: Unhas impecáveis por três semanas." data-exemplos={JSON.stringify(exemplosFrase)} />
+            <small>Vira o título do site. Se deixar em branco, a gente escreve com você na prévia.</small>
+          </div>
+          <div class="campo">
+            <span class="rotulo">Cor principal</span>
+            <div class="cores">
+              <label class="cor auto"><input type="radio" name="cor" value="" data-campo="cor" /><span>A gente escolhe</span></label>
+              {cores.map((c) => <label class="cor" style={`--c:${c}`}><input type="radio" name="cor" value={c} data-campo="cor" /><span class="sr-only">{c}</span></label>)}
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 2 -->
+        <fieldset class="etapa" data-etapa="2" hidden>
+          <legend>Serviços e preços</legend>
+          <p class="ajuda">Coloque o que você mais vende. Preço pode ser "a partir de R$ 50" ou "sob consulta".</p>
+          <div id="servicos" class="servicos"></div>
+          <button type="button" class="btn btn-borda pequeno" id="mais-servico">+ Adicionar serviço</button>
+        </fieldset>
+
+        <!-- 3 -->
+        <fieldset class="etapa" data-etapa="3" hidden>
+          <legend>Fotos</legend>
+          <p class="ajuda">De 3 a {MAX_FOTOS} fotos reais do seu trabalho ou do seu espaço, com boa luz. A primeira vira a capa.</p>
+          <label class="soltar" for="arquivo-fotos">
+            <input id="arquivo-fotos" type="file" accept="image/*" multiple />
+            <b>Escolher fotos</b><span>da galeria ou da câmera</span>
+          </label>
+          <div id="fotos" class="fotos"></div>
+          <div class="campo logo">
+            <span class="rotulo">Logo <small>(opcional)</small></span>
+            <div class="logo-linha">
+              <div id="logo-previa" class="logo-previa"></div>
+              <label class="btn btn-borda pequeno" for="arquivo-logo"><input id="arquivo-logo" type="file" accept="image/*" class="sr-only" />Escolher logo</label>
+              <button type="button" class="link" id="tirar-logo" hidden>Tirar</button>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 4 -->
+        <fieldset class="etapa" data-etapa="4" hidden>
+          <legend>Contato e domínio</legend>
+          <div class="campos-2">
+            <div class="campo"><label for="whatsapp">WhatsApp de atendimento</label><input id="whatsapp" data-campo="whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="(47) 99999-9999" /></div>
+            <div class="campo"><label for="instagram">Instagram <small>(opcional)</small></label><input id="instagram" data-campo="instagram" type="text" autocapitalize="off" spellcheck="false" placeholder="@seunegocio" /></div>
+          </div>
+          <div class="campo">
+            <span class="rotulo">Onde você atende?</span>
+            <div class="opcoes">
+              <label class="opcao"><input type="radio" name="atendimento" value="local" data-campo="atendimento" /><span>No meu espaço</span></label>
+              <label class="opcao"><input type="radio" name="atendimento" value="domicilio" data-campo="atendimento" /><span>Vou até o cliente</span></label>
+              <label class="opcao"><input type="radio" name="atendimento" value="ambos" data-campo="atendimento" /><span>Os dois</span></label>
+            </div>
+          </div>
+          <div class="campo" data-mostrar="local ambos">
+            <label for="cep">CEP <small>(preenche o endereço)</small></label>
+            <input id="cep" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="89280-000" maxlength="9" />
+          </div>
+          <div class="campo" data-mostrar="local ambos"><label for="endereco">Endereço</label><input id="endereco" data-campo="endereco" type="text" autocomplete="street-address" placeholder={`Rua, número, bairro, ${pedido.cidade}`} /></div>
+          <div class="campo" data-mostrar="domicilio ambos"><label for="bairros">Bairros ou cidades que você atende</label><input id="bairros" data-campo="bairros" type="text" placeholder={`Ex.: Centro, Serra Alta e todo ${pedido.cidade}`} /></div>
+
+          <div class="campo">
+            <span class="rotulo">Horário de atendimento</span>
+            <div class="horario">
+              {diasDaSemana.map(([dia, nome]) => (
+                <div class="dia" data-dia={dia}>
+                  <label class="aberto"><input type="checkbox" data-hora="aberto" /><span>{nome}</span></label>
+                  <input type="time" data-hora="abre" aria-label={`${nome}: abre`} />
+                  <span class="ate">às</span>
+                  <input type="time" data-hora="fecha" aria-label={`${nome}: fecha`} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="documento">CPF ou CNPJ <small>(o domínio fica registrado no seu nome)</small></label>
+            <input id="documento" data-campo="documento" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" />
+          </div>
+          <div class="campo">
+            <span class="rotulo">Endereço do site</span>
+            <div class="dominio"><input id="dominio-1" data-dominio="0" type="text" autocapitalize="off" spellcheck="false" placeholder="seunegocio" aria-label="Primeira opção de domínio" /><span>.com.br</span></div>
+            <small class="dominio-status" id="dominio-status-0"></small>
+            <div class="dominio"><input id="dominio-2" data-dominio="1" type="text" autocapitalize="off" spellcheck="false" placeholder="segunda opção" aria-label="Segunda opção de domínio" /><span>.com.br</span></div>
+            <small class="dominio-status" id="dominio-status-1"></small>
+          </div>
+          <div class="campo"><label for="observacoes">Algo mais que a gente precisa saber? <small>(opcional)</small></label><textarea id="observacoes" data-campo="observacoes" rows="3" placeholder="Ex.: atendo só com hora marcada; tenho estacionamento."></textarea></div>
+        </fieldset>
+
+        <!-- 5 -->
+        <fieldset class="etapa" data-etapa="5" hidden>
+          <legend>Confira e envie</legend>
+          <div id="revisao" class="revisao"></div>
+          <p class="ajuda">Depois de enviar, você recebe a prévia no WhatsApp em até {express.prazoHorasUteis} horas úteis e pode pedir 1 ajuste antes de publicar.</p>
+        </fieldset>
+
+        <p class="erro" id="erro" role="alert" hidden></p>
+        <nav class="navegacao">
+          <button type="button" class="btn btn-borda" id="voltar">Voltar</button>
+          <button type="button" class="btn btn-lima" id="avancar">Continuar</button>
+        </nav>
+      </form>
+    )}
+  </section>
+</Layout>
+
+<script>
+  const form = document.getElementById('envio') as HTMLFormElement | null;
+  if (form) iniciar(form);
+
+  function iniciar(form: HTMLFormElement) {
+    type Servico = { nome: string; preco: string; detalhe: string };
+    const dados = JSON.parse(document.getElementById('dados-iniciais')!.textContent!) as Record<string, any> & {
+      servicos: Servico[];
+      fotos: string[];
+      logo: string;
+      horario: { dia: string; aberto: boolean; abre: string; fecha: string }[];
+      dominios: [string, string];
+    };
+    const codigo = form.dataset.codigo!;
+    const maxFotos = Number(form.dataset.maxFotos);
+    let etapa = Number(form.dataset.etapa) || 1;
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+    const urlFoto = (chave: string) => `/api/express-foto?codigo=${codigo}&chave=${encodeURIComponent(chave)}`;
+
+    // ---------- salvar sozinho ----------
+    const salvo = $('salvo');
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let fila = Promise.resolve();
+    function salvar(imediato = false) {
+      salvo.textContent = 'Salvando…';
+      clearTimeout(timer);
+      const enviar = () =>
+        (fila = fila.then(async () => {
+          try {
+            const r = await fetch('/api/express-envio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo, dados, etapa }) });
+            salvo.textContent = r.ok ? 'Salvo ✓' : 'Não salvou. Confira a internet.';
+          } catch {
+            salvo.textContent = 'Sem internet. Tentamos de novo na próxima alteração.';
+          }
+        }));
+      if (imediato) return enviar();
+      timer = setTimeout(enviar, 700);
+    }
+
+    // ---------- campos simples ----------
+    const mascaraFone = (v: string) => {
+      let d = v.replace(/\D/g, '');
+      if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+      d = d.slice(0, 11);
+      if (d.length <= 2) return d ? `(${d}` : '';
+      if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+      if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+      return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+    };
+    const mascaraDoc = (v: string) => {
+      const d = v.replace(/\D/g, '').slice(0, 14);
+      if (d.length <= 11) return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      return d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+    };
+    const mascaras: Record<string, (v: string) => string> = { whatsapp: mascaraFone, documento: mascaraDoc };
+
+    form.querySelectorAll<HTMLInputElement>('[data-campo]').forEach((el) => {
+      const nome = el.dataset.campo!;
+      if (el.type === 'radio') el.checked = (dados[nome] ?? '') === el.value;
+      else el.value = mascaras[nome] ? mascaras[nome](String(dados[nome] ?? '')) : String(dados[nome] ?? '');
+      el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => {
+        if (mascaras[nome]) el.value = mascaras[nome](el.value);
+        dados[nome] = el.type === 'radio' ? el.value : el.value;
+        if (nome === 'ramo') exemploFrase();
+        if (nome === 'atendimento') mostrarEndereco();
+        salvar();
+      });
+    });
+
+    const frase = $<HTMLInputElement>('frase');
+    function exemploFrase() {
+      const exemplos = JSON.parse(frase.dataset.exemplos!);
+      if (dados.ramo && exemplos[dados.ramo]) frase.placeholder = exemplos[dados.ramo];
+    }
+    exemploFrase();
+
+    function mostrarEndereco() {
+      form.querySelectorAll<HTMLElement>('[data-mostrar]').forEach((el) => (el.hidden = !el.dataset.mostrar!.split(' ').includes(dados.atendimento)));
+    }
+    mostrarEndereco();
+
+    // CEP preenche o endereço (BrasilAPI). Se ela falhar, a pessoa digita à mão.
+    const cep = $<HTMLInputElement>('cep');
+    cep.addEventListener('input', async () => {
+      const d = cep.value.replace(/\D/g, '').slice(0, 8);
+      cep.value = d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+      if (d.length !== 8) return;
+      try {
+        const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${d}`);
+        if (!r.ok) return;
+        const e = await r.json();
+        const endereco = $<HTMLInputElement>('endereco');
+        // Rua, nº (a pessoa completa), bairro, cidade; o cursor já para no número.
+        const rua = e.street ? `${e.street}, nº ` : '';
+        const resto = [e.neighborhood, e.city].filter(Boolean).join(', ');
+        endereco.value = rua ? `${rua}, ${resto}` : resto;
+        dados.endereco = endereco.value;
+        salvar();
+        endereco.focus();
+        if (rua) endereco.setSelectionRange(rua.length, rua.length);
+      } catch {}
+    });
+
+    // ---------- serviços ----------
+    const listaServicos = $('servicos');
+    function desenharServicos() {
+      listaServicos.innerHTML = '';
+      dados.servicos.forEach((s, i) => {
+        const linha = document.createElement('div');
+        linha.className = 'servico';
+        linha.innerHTML = `
+          <input type="text" maxlength="80" placeholder="Serviço (ex.: Esmaltação em gel)" aria-label="Nome do serviço ${i + 1}" data-s="nome">
+          <input type="text" maxlength="30" placeholder="Preço (ex.: R$ 70)" aria-label="Preço do serviço ${i + 1}" data-s="preco" inputmode="text">
+          <input type="text" maxlength="160" placeholder="Detalhe opcional (ex.: dura 3 semanas · 1 h)" aria-label="Detalhe do serviço ${i + 1}" data-s="detalhe">
+          <button type="button" class="tirar" aria-label="Tirar o serviço ${i + 1}">×</button>`;
+        linha.querySelectorAll<HTMLInputElement>('[data-s]').forEach((el) => {
+          const k = el.dataset.s as keyof Servico;
+          el.value = s[k];
+          el.addEventListener('input', () => {
+            s[k] = el.value;
+            salvar();
+          });
+        });
+        linha.querySelector('.tirar')!.addEventListener('click', () => {
+          dados.servicos.splice(i, 1);
+          if (!dados.servicos.length) dados.servicos.push({ nome: '', preco: '', detalhe: '' });
+          desenharServicos();
+          salvar();
+        });
+        listaServicos.append(linha);
+      });
+    }
+    $('mais-servico').addEventListener('click', () => {
+      dados.servicos.push({ nome: '', preco: '', detalhe: '' });
+      desenharServicos();
+      listaServicos.querySelector<HTMLInputElement>('.servico:last-child input')!.focus();
+    });
+    desenharServicos();
+
+    // ---------- fotos ----------
+    // Reduz no próprio celular (até 1600 px, JPEG) antes de subir: rápido no 4G e leve no site.
+    async function reduzir(arquivo: File, lado: number, manterPng: boolean): Promise<Blob> {
+      const img = await createImageBitmap(arquivo);
+      const escala = Math.min(1, lado / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * escala);
+      canvas.height = Math.round(img.height * escala);
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const tipo = manterPng && arquivo.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      return new Promise((ok, falha) => canvas.toBlob((b) => (b ? ok(b) : falha(new Error('foto'))), tipo, 0.82));
+    }
+    async function subir(blob: Blob) {
+      const r = await fetch(`/api/express-foto?codigo=${codigo}`, { method: 'POST', headers: { 'Content-Type': blob.type }, body: blob });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.erro);
+      return j.chave as string;
+    }
+
+    const grade = $('fotos');
+    function desenharFotos() {
+      grade.innerHTML = '';
+      dados.fotos.forEach((chave, i) => {
+        const item = document.createElement('figure');
+        item.className = 'foto';
+        item.innerHTML = `<img alt="" loading="lazy"><figcaption>${i === 0 ? '<b>Capa</b>' : '<button type="button" class="capa">Usar de capa</button>'}<button type="button" class="tirar" aria-label="Tirar a foto ${i + 1}">×</button></figcaption>`;
+        item.querySelector('img')!.src = urlFoto(chave);
+        item.querySelector('.tirar')!.addEventListener('click', () => {
+          dados.fotos.splice(i, 1);
+          desenharFotos();
+          salvar();
+        });
+        item.querySelector('.capa')?.addEventListener('click', () => {
+          dados.fotos.unshift(...dados.fotos.splice(i, 1));
+          desenharFotos();
+          salvar();
+        });
+        grade.append(item);
+      });
+    }
+    desenharFotos();
+
+    const entradaFotos = $<HTMLInputElement>('arquivo-fotos');
+    entradaFotos.addEventListener('change', async () => {
+      const arquivos = [...(entradaFotos.files ?? [])].slice(0, maxFotos - dados.fotos.length);
+      entradaFotos.value = '';
+      if (!arquivos.length) return avisar(`O limite é de ${maxFotos} fotos. Tire uma para trocar.`);
+      for (const arquivo of arquivos) {
+        const carregando = document.createElement('figure');
+        carregando.className = 'foto carregando';
+        carregando.innerHTML = '<span>Enviando…</span>';
+        grade.append(carregando);
+        try {
+          dados.fotos.push(await subir(await reduzir(arquivo, 1600, false)));
+          salvar();
+        } catch (e) {
+          avisar(e instanceof Error && e.message !== 'foto' ? e.message : 'Não deu para ler essa foto. Tente outra.');
+        }
+        desenharFotos();
+      }
+    });
+
+    const logoPrevia = $('logo-previa');
+    const tirarLogo = $('tirar-logo');
+    function desenharLogo() {
+      logoPrevia.innerHTML = dados.logo ? `<img alt="Seu logo" src="${urlFoto(dados.logo)}">` : '<span>Sem logo</span>';
+      tirarLogo.hidden = !dados.logo;
+    }
+    desenharLogo();
+    const entradaLogo = $<HTMLInputElement>('arquivo-logo');
+    entradaLogo.addEventListener('change', async () => {
+      const arquivo = entradaLogo.files?.[0];
+      entradaLogo.value = '';
+      if (!arquivo) return;
+      logoPrevia.innerHTML = '<span>Enviando…</span>';
+      try {
+        dados.logo = await subir(await reduzir(arquivo, 800, true));
+        salvar();
+      } catch (e) {
+        avisar(e instanceof Error && e.message !== 'foto' ? e.message : 'Não deu para ler esse logo. Tente outro arquivo.');
+      }
+      desenharLogo();
+    });
+    tirarLogo.addEventListener('click', () => {
+      dados.logo = '';
+      desenharLogo();
+      salvar();
+    });
+
+    // ---------- horário ----------
+    form.querySelectorAll<HTMLElement>('.dia').forEach((linha) => {
+      const h = dados.horario.find((x) => x.dia === linha.dataset.dia)!;
+      const aberto = linha.querySelector<HTMLInputElement>('[data-hora="aberto"]')!;
+      const abre = linha.querySelector<HTMLInputElement>('[data-hora="abre"]')!;
+      const fecha = linha.querySelector<HTMLInputElement>('[data-hora="fecha"]')!;
+      const pintar = () => {
+        abre.disabled = fecha.disabled = !aberto.checked;
+        linha.classList.toggle('fechado', !aberto.checked);
+      };
+      aberto.checked = h.aberto;
+      abre.value = h.abre;
+      fecha.value = h.fecha;
+      pintar();
+      aberto.addEventListener('change', () => ((h.aberto = aberto.checked), pintar(), salvar()));
+      abre.addEventListener('input', () => ((h.abre = abre.value), salvar()));
+      fecha.addEventListener('input', () => ((h.fecha = fecha.value), salvar()));
+    });
+
+    // ---------- domínio ----------
+    const limparDominio = (v: string) =>
+      v.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\.com\.br.*$/, '').replace(/[^a-z0-9-]/g, '').slice(0, 26);
+    const sugestao = limparDominio(String(dados.nome ?? '').replace(/\s+/g, ''));
+    form.querySelectorAll<HTMLInputElement>('[data-dominio]').forEach((el) => {
+      const i = Number(el.dataset.dominio);
+      const status = $(`dominio-status-${i}`);
+      let espera: ReturnType<typeof setTimeout> | undefined;
+      const conferir = () => {
+        clearTimeout(espera);
+        const nome = dados.dominios[i];
+        if (nome.length < 2) return (status.textContent = '');
+        status.textContent = 'Conferindo…';
+        status.className = 'dominio-status';
+        espera = setTimeout(async () => {
+          try {
+            const j = await (await fetch(`/api/express-dominio?nome=${encodeURIComponent(nome)}`)).json();
+            if (j.nome !== dados.dominios[i]) return;
+            status.textContent = j.disponivel === true ? `✓ ${nome}.com.br está livre` : j.disponivel === false ? `✗ ${nome}.com.br já tem dono. Tente outra opção.` : 'Não deu para conferir agora; a gente confere antes de registrar.';
+            status.className = `dominio-status ${j.disponivel === true ? 'livre' : j.disponivel === false ? 'ocupado' : ''}`;
+          } catch {
+            status.textContent = '';
+          }
+        }, 500);
+      };
+      if (!dados.dominios[i] && i === 0 && sugestao.length >= 2) dados.dominios[0] = sugestao;
+      el.value = dados.dominios[i];
+      conferir();
+      el.addEventListener('input', () => {
+        el.value = limparDominio(el.value);
+        dados.dominios[i] = el.value;
+        conferir();
+        salvar();
+      });
+    });
+
+    // ---------- etapas ----------
+    const erro = $('erro');
+    function avisar(texto: string) {
+      erro.textContent = texto;
+      erro.hidden = false;
+    }
+    const nomesDias: Record<string, string> = { seg: 'Seg', ter: 'Ter', qua: 'Qua', qui: 'Qui', sex: 'Sex', sab: 'Sáb', dom: 'Dom' };
+    const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+    function validarEtapa(n: number): string {
+      const doc = String(dados.documento ?? '').replace(/\D/g, '');
+      if (n === 1 && !String(dados.nome).trim()) return 'Coloque o nome do negócio.';
+      if (n === 1 && !dados.ramo) return 'Escolha o seu ramo.';
+      if (n === 2 && !dados.servicos.some((s) => s.nome.trim())) return 'Coloque pelo menos 1 serviço.';
+      if (n === 3 && dados.fotos.length < 1) return 'Mande pelo menos 1 foto. O ideal são 3 ou mais.';
+      if (n === 4) {
+        if (String(dados.whatsapp).replace(/\D/g, '').length < 10) return 'Coloque o WhatsApp com DDD.';
+        if (dados.atendimento !== 'domicilio' && !String(dados.endereco).trim()) return 'Coloque o endereço.';
+        if (dados.atendimento !== 'local' && !String(dados.bairros).trim()) return 'Diga os bairros ou cidades que você atende.';
+        if (doc.length !== 11 && doc.length !== 14) return 'Coloque o CPF (11 números) ou o CNPJ (14 números).';
+        if (!dados.dominios[0]) return 'Escolha o endereço do site.';
+      }
+      return '';
+    }
+
+    function revisar() {
+      const servicos = dados.servicos.filter((s) => s.nome.trim());
+      const horario = dados.horario.filter((h) => h.aberto).map((h) => `${nomesDias[h.dia]} ${h.abre}–${h.fecha}`).join(' · ') || 'a combinar';
+      $('revisao').innerHTML = `
+        <div><span>Negócio</span><b>${esc(dados.nome)}</b></div>
+        <div><span>Frase</span><b>${esc(dados.frase || 'a gente escreve com você')}</b></div>
+        <div><span>Serviços</span><b>${servicos.map((s) => esc(`${s.nome}${s.preco ? ` (${s.preco})` : ''}`)).join(', ')}</b></div>
+        <div><span>Fotos</span><b>${dados.fotos.length} foto${dados.fotos.length === 1 ? '' : 's'}${dados.logo ? ' + logo' : ''}</b></div>
+        <div><span>WhatsApp</span><b>${esc(mascaraFone(String(dados.whatsapp)))}</b></div>
+        <div><span>Horário</span><b>${esc(horario)}</b></div>
+        <div><span>Site</span><b>${esc(dados.dominios.filter(Boolean).map((d) => `${d}.com.br`).join(' ou '))}</b></div>`;
+    }
+
+    function mostrar(n: number) {
+      etapa = n;
+      form.querySelectorAll<HTMLElement>('fieldset.etapa').forEach((f) => (f.hidden = Number(f.dataset.etapa) !== n));
+      $('barra').style.width = `${(Math.min(n, 4) / 4) * 100}%`;
+      $('etapa-texto').textContent = n === 5 ? 'Tudo pronto' : `Etapa ${n} de 4`;
+      $<HTMLButtonElement>('voltar').hidden = n === 1;
+      $('avancar').textContent = n === 5 ? 'Enviar para a equipe' : n === 4 ? 'Revisar' : 'Continuar';
+      if (n === 5) revisar();
+      erro.hidden = true;
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    $('voltar').addEventListener('click', () => mostrar(Math.max(1, etapa - 1)));
+    $('avancar').addEventListener('click', async () => {
+      erro.hidden = true;
+      if (etapa < 5) {
+        const problema = validarEtapa(etapa);
+        if (problema) return avisar(problema);
+        mostrar(etapa + 1);
+        return salvar(true);
+      }
+      const botao = $<HTMLButtonElement>('avancar');
+      botao.disabled = true;
+      botao.textContent = 'Enviando…';
+      try {
+        await fila;
+        const r = await fetch('/api/express-envio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo, dados, etapa, concluir: true }) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.erro);
+        location.reload();
+      } catch (e) {
+        avisar(e instanceof Error && e.message ? e.message : 'Não deu para enviar. Tente de novo.');
+        botao.disabled = false;
+        botao.textContent = 'Enviar para a equipe';
+      }
+    });
+
+    mostrar(etapa);
+  }
+</script>
+
+<!-- Global: serviços e fotos são criados pelo script, e o CSS com escopo do Astro não chega neles. Tudo fica sob .envio. -->
+<style is:global>
+  .envio { --line: #e1e2d9; --muted: var(--color-grafite); --soft: var(--color-nevoa); --accent-ink: var(--color-lima-escura); max-width: 640px; padding-block: 28px 80px; }
+  .eyebrow { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+  .aviso-centro { display: grid; gap: 16px; padding-block: 40px; }
+  .aviso-centro h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; }
+  .aviso-centro p:not(.eyebrow) { color: var(--muted); font-size: 18px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 700; font-size: 16.5px; border: 0; border-radius: 14px; padding: 15px 20px; cursor: pointer; text-decoration: none; }
+  .btn-lima { background: var(--color-lima); color: var(--color-tinta); }
+  .btn-lima:disabled { opacity: 0.6; cursor: wait; }
+  .btn-borda { background: #fff; color: var(--color-tinta); border: 1.5px solid var(--line); }
+  .btn.pequeno { padding: 10px 14px; font-size: 14.5px; border-radius: 12px; }
+  .link { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); text-decoration: underline; cursor: pointer; }
+
+  .assistente { display: grid; gap: 22px; }
+  .cabeca { display: grid; gap: 10px; position: sticky; top: 4rem; z-index: 5; background: var(--color-papel); padding-block: 10px; }
+  .progresso { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .progresso i { display: block; height: 100%; background: var(--color-lima); border-radius: 99px; transition: width 0.3s ease; }
+  .linha-status { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--muted); }
+  .linha-status span:first-child { color: var(--color-tinta); font-weight: 600; }
+
+  .etapa { border: 0; margin: 0; padding: 0; display: grid; gap: 18px; min-width: 0; }
+  .etapa[hidden] { display: none; }
+  legend { font-size: clamp(28px, 6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; padding: 0; margin-bottom: 4px; }
+  .ajuda { color: var(--muted); }
+  .campo { display: grid; gap: 7px; min-width: 0; }
+  .campo[hidden] { display: none; }
+  .campo label, .rotulo { font-size: 14.5px; font-weight: 600; }
+  .campo small, .rotulo small, label small { font-weight: 400; color: var(--muted); font-size: 13px; }
+  .campo input[type='text'], .campo input[type='tel'], .campo textarea, .servico input, .dominio input { font: inherit; font-size: 16px; padding: 13px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; color: var(--color-tinta); width: 100%; min-width: 0; }
+  .campo input:focus, .campo textarea:focus, .servico input:focus, .dominio input:focus { outline: none; border-color: var(--color-tinta); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lima) 60%, transparent); }
+  .campos-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opcao { position: relative; cursor: pointer; }
+  .opcao input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .opcao span { display: block; padding: 11px 15px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-weight: 500; }
+  .opcao input:checked + span { border-color: var(--color-tinta); background: var(--color-tinta); color: var(--color-papel); }
+  .opcao input:focus-visible + span { box-shadow: 0 0 0 3px var(--color-lima); }
+
+  .cores { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .cor { position: relative; cursor: pointer; }
+  .cor input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .cor:not(.auto) span { display: block; }
+  .cor:not(.auto)::before { content: ''; display: block; width: 38px; height: 38px; border-radius: 50%; background: var(--c); border: 3px solid #fff; box-shadow: 0 0 0 1.5px var(--line); }
+  .cor:has(input:checked)::before { box-shadow: 0 0 0 3px var(--color-tinta); }
+  .cor.auto span { display: block; padding: 9px 13px; border-radius: 99px; border: 1.5px solid var(--line); background: #fff; font-size: 14px; font-weight: 500; }
+  .cor.auto input:checked + span { border-color: var(--color-tinta); background: var(--color-tinta); color: var(--color-papel); }
+  .cor:has(input:focus-visible)::before, .cor.auto input:focus-visible + span { outline: 3px solid var(--color-lima); outline-offset: 2px; }
+
+  .servicos { display: grid; gap: 12px; }
+  .servico { display: grid; grid-template-columns: 1fr 130px 40px; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+  .servico input[data-s='detalhe'] { grid-column: 1 / 3; font-size: 15px; }
+  .tirar { width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); }
+
+  .soltar { position: relative; display: grid; justify-items: center; gap: 4px; padding: 26px; border: 2px dashed var(--accent-ink); border-radius: 18px; background: color-mix(in srgb, var(--color-lima) 12%, #fff); cursor: pointer; text-align: center; }
+  .soltar input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .soltar b { font-size: 17px; }
+  .soltar span { color: var(--muted); font-size: 14px; }
+  .soltar:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--color-lima); }
+  .fotos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .foto { margin: 0; position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: var(--soft); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto figcaption { position: absolute; inset: auto 6px 6px 6px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .foto figcaption b, .foto .capa { font-size: 11.5px; background: rgba(255, 255, 255, 0.92); border: 0; border-radius: 99px; padding: 5px 9px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .foto .tirar { width: 30px; height: 30px; font-size: 18px; background: rgba(255, 255, 255, 0.92); border: 0; }
+  .foto.carregando { display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+  .logo-linha { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .logo-previa { width: 64px; height: 64px; border-radius: 14px; border: 1px solid var(--line); background: #fff; display: grid; place-items: center; overflow: hidden; font-size: 11px; color: var(--muted); text-align: center; }
+  .logo-previa img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+  .horario { display: grid; gap: 6px; }
+  .dia { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 8px; }
+  .dia.fechado input[type='time'], .dia.fechado .ate { opacity: 0.35; }
+  .aberto { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+  .aberto input { width: 20px; height: 20px; accent-color: var(--accent-ink); }
+  .dia input[type='time'] { font: inherit; font-size: 15px; padding: 8px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; }
+  .ate { color: var(--muted); font-size: 14px; }
+
+  .dominio { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+  .dominio input { border: 0 !important; box-shadow: none !important; }
+  .dominio span { padding-right: 14px; color: var(--muted); font-weight: 500; }
+  .dominio:focus-within { border-color: var(--color-tinta); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lima) 60%, transparent); }
+  .dominio-status { min-height: 1.2em; font-size: 13.5px; color: var(--muted); }
+  .dominio-status.livre { color: var(--accent-ink); font-weight: 600; }
+  .dominio-status.ocupado { color: #a23b00; font-weight: 600; }
+
+  .revisao { display: grid; gap: 0; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 6px 18px; }
+  .revisao div { display: grid; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .revisao div:last-child { border-bottom: 0; }
+  .revisao span { font-size: 13px; color: var(--muted); }
+
+  .erro { background: #fff4e5; color: #6b3d00; border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+  .navegacao { display: flex; gap: 10px; position: sticky; bottom: 0; background: var(--color-papel); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+  .navegacao .btn-lima { flex: 1; }
+
+  @media (max-width: 520px) {
+    .campos-2, .fotos { grid-template-columns: 1fr 1fr; }
+    .campos-2 { grid-template-columns: 1fr; }
+    .servico { grid-template-columns: 1fr 96px 40px; }
+    .dia { grid-template-columns: 1fr auto auto auto; gap: 6px; }
+    .dia input[type='time'] { font-size: 14px; padding: 7px 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .progresso i { transition: none; } }
+</style>

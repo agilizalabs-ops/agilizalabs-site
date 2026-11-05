@@ -5,7 +5,9 @@
 import { env } from 'cloudflare:workers';
 import Layout from '../../layouts/Layout.astro';
 import { tiers, express, brl, brlCentavos } from '../../data/tiers';
-import { vagasRestantes, textoAceiteExpress } from '../../lib/express';
+import ExpressProximosPassos from '../../components/ExpressProximosPassos.astro';
+import { vagasRestantes } from '../../lib/express';
+import { linkWhatsApp } from '../../config';
 
 export const prerender = false;
 
@@ -18,8 +20,15 @@ try {
 const lotado = restantes === 0;
 const preenchidas = express.vagasPorSemana - restantes;
 
+// Padrão útil: já deixa marcada a cidade de onde a pessoa acessa, quando é uma das atendidas (o Cloudflare sabe pela conexão).
+const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const cidadeDaConexao = (Astro.request as Request & { cf?: { city?: string } }).cf?.city;
+const cidadeDetectada = express.cidades.find((c) => cidadeDaConexao && semAcento(c) === semAcento(cidadeDaConexao));
+
 const presenca = tiers.find((t) => t.id === 'presenca')!.formas.find((f) => f.nome === 'Com Cuidado')!;
 const institucional = tiers.find((t) => t.id === 'institucional')!.formas.find((f) => f.nome === 'Com Cuidado')!;
+// Enquadramento só quando é verdade: o valor por dia sai do preço de tiers.ts.
+const porDia = express.mensal / 30 < 1 ? 'menos de R$ 1 por dia' : `cerca de ${brlCentavos(Math.ceil((express.mensal / 30) * 10) / 10)} por dia`;
 const cidadesTexto = express.cidades.join(', ').replace(/, ([^,]*)$/, ' e $1');
 
 const menu = [
@@ -31,7 +40,7 @@ const menu = [
 
 const duvidas = [
   { p: 'Por que tão barato? Tem pegadinha?', r: 'O site sai de um modelo pronto, feito para o seu ramo. Você economiza no sob medida, não na qualidade: o site é rápido, preparado para o Google e o domínio fica no seu nome. O que está nesta página é o que você recebe.' },
-  { p: 'O que acontece depois que eu pago?', r: `Na mesma hora você vê a lista do que mandar pelo WhatsApp: fotos, serviços, preços, horário e o CPF ou CNPJ para o domínio. Assim que tudo chega, o prazo de ${express.prazoHorasUteis} horas úteis começa a contar.` },
+  { p: 'O que acontece depois que eu pago?', r: `Na mesma hora abre uma tela para você montar o site: fotos, serviços, preços, horário e o endereço do site. Leva uns 5 minutos e salva sozinho. Quando você envia, o prazo de ${express.prazoHorasUteis} horas úteis começa a contar.` },
   { p: 'E se eu não gostar do resultado?', r: 'Você vê o site pronto no celular antes de ir ao ar e pede 1 rodada de ajustes. Ele só é publicado depois do seu OK.' },
   { p: 'Posso desistir depois de pagar?', r: 'Pode. Em até 7 dias depois do pagamento, você desiste e recebe o valor de volta, sem precisar explicar.' },
   { p: 'Quero mudar um preço depois. Como faço?', r: 'Cada alteração pequena custa R$ 80. Se você muda muito, o Agenda Cheia sai mais em conta: tem 1 alteração por mês inclusa.' },
@@ -68,7 +77,7 @@ const dadosEstruturados = {
         <p class="sub">Você manda as fotos, os serviços e os preços. A gente monta, publica e mantém o site no ar. Sem reunião e sem enrolação.</p>
         <div class="preco">
           <div class="grande"><span>R$</span>{express.setup}</div>
-          <div class="mensal">+ <b>{brlCentavos(express.mensal)}/mês</b> de hospedagem<br />1ª mensalidade só 1 mês depois do site no ar</div>
+          <div class="mensal">+ <b>{brlCentavos(express.mensal)}/mês</b> de hospedagem ({porDia})<br />1ª mensalidade só 1 mês depois do site no ar</div>
         </div>
         <div class="acoes">
           <a class="btn btn-lima" href="#checkout">Quero meu site por {brl(express.setup)}</a>
@@ -123,7 +132,7 @@ const dadosEstruturados = {
       </div>
       <ol class="passos">
         <li><span class="tempo">Agora</span><b>Você garante a vaga</b><span>Pix ou cartão, aqui mesmo nesta página.</span></li>
-        <li><span class="tempo">5 minutos</span><b>Manda as informações</b><span>Fotos, serviços, preços e horário, pelo WhatsApp.</span></li>
+        <li><span class="tempo">5 minutos</span><b>Monta o seu site</b><span>Fotos, serviços, preços e horário, numa tela simples logo depois de pagar.</span></li>
         <li><span class="tempo">Até {express.prazoHorasUteis} h úteis</span><b>Recebe o site pronto</b><span>Você olha no celular e pede 1 ajuste se quiser.</span></li>
         <li><span class="tempo">Logo depois do OK</span><b>Seu site vai ao ar</b><span>Com o seu domínio .com.br, pronto para divulgar.</span></li>
       </ol>
@@ -196,30 +205,43 @@ const dadosEstruturados = {
           <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax={express.vagasPorSemana} aria-valuenow={preenchidas} aria-label="Vagas preenchidas nesta semana"><i style={`width:${Math.max(4, (preenchidas / express.vagasPorSemana) * 100)}%`}></i></div>
           <span><b>{preenchidas} de {express.vagasPorSemana}</b> vagas preenchidas nesta semana</span>
         </div>
-        <div class="selos"><span>Pix ou cartão</span><span>7 dias para desistir</span><span>Atendimento de gente da região</span></div>
+        <p class="autoridade">Quem faz é a Agiliza Labs, de São Bento do Sul, a mesma equipe do site e do app da <a href="https://novafmsbs.com.br" target="_blank" rel="noopener">Nova FM 87,5</a>.</p>
       </div>
 
-      <form class="pedido" id="pedido" novalidate data-setup={express.setup} data-maps={express.maps}>
-        <div class="linha"><span>Site Express (setup)</span><span>{brlCentavos(express.setup)}</span></div>
+      <form class="pedido" id="pedido" novalidate autocomplete="on" data-setup={express.setup} data-maps={express.maps} data-zap-link={linkWhatsApp('Oi! Paguei o Agiliza Express e preciso do link para montar o meu site.')}>
+        <ol class="etapas" aria-label="Etapas da compra">
+          <li aria-current="step">1. Seus dados</li>
+          <li>2. Pagamento</li>
+          <li>3. Fotos e informações</li>
+        </ol>
+        <div class="campos">
+          <div class="campo largo"><label for="negocio">Nome do negócio</label><input id="negocio" name="negocio" type="text" required minlength="2" maxlength="80" placeholder="Ex.: Íris Unhas" autocomplete="organization" enterkeyhint="next" /></div>
+          <div class="campo"><label for="whatsapp">WhatsApp com DDD</label><input id="whatsapp" name="whatsapp" type="tel" required inputmode="tel" placeholder="(47) 99999-9999" autocomplete="tel" enterkeyhint="next" /></div>
+          <div class="campo"><label for="cidade">Cidade</label>
+            <select id="cidade" name="cidade" autocomplete="address-level2">{express.cidades.map((c) => <option selected={c === cidadeDetectada}>{c}</option>)}</select></div>
+          <div class="campo largo"><label for="email">E-mail <small>(para o comprovante)</small></label><input id="email" name="email" type="email" required inputmode="email" autocapitalize="off" spellcheck="false" placeholder="voce@gmail.com" autocomplete="email" enterkeyhint="done" /></div>
+        </div>
+        <p class="dica">Se sair e voltar, o que você digitou continua aqui (fica só neste aparelho).</p>
+
         <label class="bump" for="maps">
           <input type="checkbox" id="maps" name="maps" />
-          <div><b>Sim! Quero aparecer no Google Maps por + {brl(express.maps)}</b><span>Crio ou ajusto o seu Perfil da Empresa no Google: categoria, fotos, horário e link do site. Avulso custa <s>{brl(express.mapsAvulso)}</s>.</span></div>
+          <div><b>Quero aparecer no Google Maps por + {brl(express.maps)}</b><span>Crio ou ajusto o seu Perfil da Empresa no Google: categoria, fotos, horário e link do site. Avulso custa <s>{brl(express.mapsAvulso)}</s>.</span></div>
         </label>
-        <div class="campos">
-          <div class="campo largo"><label for="negocio">Nome do negócio</label><input id="negocio" name="negocio" type="text" required minlength="2" maxlength="80" placeholder="Ex.: Íris Unhas" autocomplete="organization" /></div>
-          <div class="campo"><label for="cidade">Cidade</label>
-            <select id="cidade" name="cidade">{express.cidades.map((c) => <option>{c}</option>)}</select></div>
-          <div class="campo"><label for="whatsapp">WhatsApp com DDD</label><input id="whatsapp" name="whatsapp" type="tel" required inputmode="tel" placeholder="(47) 9 0000-0000" autocomplete="tel" /></div>
-          <div class="campo largo"><label for="email">E-mail</label><input id="email" name="email" type="email" required placeholder="voce@email.com" autocomplete="email" /></div>
+
+        <div class="resumo">
+          <div class="linha"><span>Site Express (setup)</span><span>{brlCentavos(express.setup)}</span></div>
+          <div class="linha" id="linha-maps" hidden><span>Google Maps</span><span>{brlCentavos(express.maps)}</span></div>
+          <div class="total"><span>Total hoje</span><b id="total">{brlCentavos(express.setup)}</b></div>
+          <p class="depois">Depois: {brlCentavos(express.mensal)}/mês ({porDia}), a 1ª só 1 mês depois do site no ar, com fidelidade de {express.fidelidadeMeses} meses.</p>
         </div>
+
         <label class="aceite" for="aceite">
-          <input type="checkbox" id="aceite" name="aceite" />
-          <span>Li e aceito os <a href="/express/termos" target="_blank">termos do Express</a>: mensalidade de {brlCentavos(express.mensal)} com fidelidade de {express.fidelidadeMeses} meses, primeira cobrança 1 mês depois do site no ar.</span>
+          <input type="checkbox" id="aceite" name="aceite" required />
+          <span>Li e aceito os <a href="/express/termos" target="_blank">termos do Express</a>: mensalidade de {brlCentavos(express.mensal)} com fidelidade de {express.fidelidadeMeses} meses, a 1ª cobrança 1 mês depois do site no ar.</span>
         </label>
-        <div class="total"><span>Total hoje</span><b id="total">{brlCentavos(express.setup)}</b></div>
         <button class="btn btn-lima" id="pagar" type="submit" disabled={lotado}>{lotado ? 'Vagas da semana esgotadas' : `Pagar ${brlCentavos(express.setup)} com Pix ou cartão`}</button>
-        <p class="retorno" id="retorno" role="status" aria-live="polite" hidden></p>
-        <p class="pagamento">Pagamento processado pela InfinitePay. A Agiliza não vê nem guarda os dados do seu cartão.</p>
+        <p class="retorno" id="retorno" role="alert" hidden></p>
+        <p class="garantia">🔒 Pagamento pela InfinitePay, numa janela por cima desta página. A Agiliza não vê os dados do seu cartão. Você tem 7 dias para desistir, com devolução total.</p>
       </form>
     </div></section>
 
@@ -230,6 +252,33 @@ const dadosEstruturados = {
       </div>
     </div></section>
 
+    <section class="bloco"><div class="conteudo final">
+      <h2>Quem procura o seu serviço na cidade acha quem tem site.</h2>
+      <p>Em até 48 horas úteis depois das suas fotos, o seu negócio aparece com um site seu, com domínio no seu nome.</p>
+      <a class="btn btn-lima" href="#checkout">Quero meu site por {brl(express.setup)}</a>
+      <span>+ {brlCentavos(express.mensal)}/mês · 7 dias para desistir</span>
+    </div></section>
+
+    <dialog class="janela-pagamento" id="dialogo" aria-labelledby="dialogo-titulo">
+      <div id="esperando">
+        <ol class="etapas" aria-label="Etapas da compra">
+          <li>✓ Seus dados</li>
+          <li aria-current="step">2. Pagamento</li>
+          <li>3. Fotos e informações</li>
+        </ol>
+        <h2 id="dialogo-titulo">Conclua o pagamento na janela da InfinitePay</h2>
+        <p class="mudo">Pix ou cartão. Assim que o pagamento cair, esta tela muda sozinha.</p>
+        <p class="aguardando" role="status" aria-live="polite"><i class="girando" aria-hidden="true"></i><span id="status-texto">Aguardando o pagamento…</span></p>
+        <div class="acoes-dialogo">
+          <button class="btn btn-lima" type="button" id="reabrir">Abrir o pagamento de novo</button>
+          <button class="btn btn-borda" type="button" id="voltar">Voltar e corrigir os dados</button>
+        </div>
+      </div>
+      <div id="pago" hidden>
+        <ExpressProximosPassos negocio="seu negócio" linkEnvio="#" />
+      </div>
+    </dialog>
+
     <div class="fixo" id="fixo"><div class="conteudo">
       <div class="r">Site Express<b>{brl(express.setup)} + {brlCentavos(express.mensal)}/mês</b></div>
       <a class="btn btn-lima" href="#checkout">Quero o meu</a>
@@ -239,60 +288,178 @@ const dadosEstruturados = {
 
 <script>
   const form = document.getElementById('pedido') as HTMLFormElement;
-  const maps = form.querySelector<HTMLInputElement>('#maps')!;
-  const aceite = form.querySelector<HTMLInputElement>('#aceite')!;
+  const campo = (nome: string) => form.elements.namedItem(nome) as HTMLInputElement;
+  const maps = campo('maps');
+  const aceite = campo('aceite');
+  const whatsapp = campo('whatsapp');
+  const email = campo('email');
+  const negocio = campo('negocio');
   const total = document.getElementById('total')!;
+  const linhaMaps = document.getElementById('linha-maps')!;
   const pagar = document.getElementById('pagar') as HTMLButtonElement;
   const retorno = document.getElementById('retorno')!;
+  const dialogo = document.getElementById('dialogo') as HTMLDialogElement;
+  const statusTexto = document.getElementById('status-texto')!;
   const lotado = pagar.disabled;
   const setup = Number(form.dataset.setup);
   const valorMaps = Number(form.dataset.maps);
   const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const valor = () => setup + (maps.checked ? valorMaps : 0);
 
   function atualizar() {
-    if (lotado) return;
-    const v = setup + (maps.checked ? valorMaps : 0);
-    total.textContent = brl(v);
-    pagar.textContent = `Pagar ${brl(v)} com Pix ou cartão`;
+    linhaMaps.hidden = !maps.checked;
+    total.textContent = brl(valor());
+    if (!lotado) pagar.textContent = `Pagar ${brl(valor())} com Pix ou cartão`;
   }
+
+  // Preenchimento automático: o navegador completa pelos autocomplete; o que a pessoa digitou fica salvo
+  // neste aparelho para quando ela voltar do Instagram. Só conveniência: sem o storage, a página funciona igual.
+  const CHAVE = 'agiliza-express-dados';
+  const salvos = ['negocio', 'whatsapp', 'email', 'cidade'];
+  try {
+    const dados = JSON.parse(localStorage.getItem(CHAVE) ?? '{}') as Record<string, string>;
+    for (const nome of salvos) if (dados[nome]) campo(nome).value = dados[nome];
+  } catch {}
+  function salvar() {
+    try {
+      localStorage.setItem(CHAVE, JSON.stringify(Object.fromEntries(salvos.map((n) => [n, campo(n).value]))));
+    } catch {}
+  }
+  form.addEventListener('input', salvar);
+  form.addEventListener('change', salvar);
+
+  // WhatsApp no formato (47) 99999-9999, aceitando o +55 que o preenchimento automático costuma trazer.
+  function mascara(texto: string) {
+    let d = texto.replace(/\D/g, '');
+    if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    d = d.slice(0, 11);
+    if (d.length <= 2) return d ? `(${d}` : '';
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  }
+  whatsapp.value = mascara(whatsapp.value);
+  whatsapp.addEventListener('input', () => (whatsapp.value = mascara(whatsapp.value)));
+  email.addEventListener('blur', () => (email.value = email.value.trim().toLowerCase()));
+
+  // Mensagens de erro em português, campo a campo.
+  function validar() {
+    const digitos = whatsapp.value.replace(/\D/g, '');
+    negocio.setCustomValidity(negocio.value.trim().length >= 2 ? '' : 'Coloque o nome do seu negócio.');
+    whatsapp.setCustomValidity(digitos.length === 10 || digitos.length === 11 ? '' : 'Coloque o WhatsApp com DDD, por exemplo (47) 99999-9999.');
+    email.setCustomValidity(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) ? '' : 'Confira o e-mail, por exemplo voce@gmail.com.');
+    aceite.setCustomValidity(aceite.checked ? '' : 'Marque que leu e aceita os termos para continuar.');
+    return form.reportValidity();
+  }
+  for (const c of [negocio, whatsapp, email, aceite]) c.addEventListener('input', () => c.setCustomValidity(''));
   maps.addEventListener('change', atualizar);
+  atualizar();
 
   function avisar(texto: string) {
     retorno.textContent = texto;
     retorno.hidden = false;
   }
 
+  // Pagamento: a InfinitePay não deixa embutir o checkout, então ele abre numa janela por cima desta página.
+  // Esta página espera: confirma pela mensagem da página de retorno e, de garantia, pergunta ao servidor (webhook).
+  let pedido = '';
+  let urlPagamento = '';
+  let janela: Window | null = null;
+  let vigia: ReturnType<typeof setInterval> | undefined;
+
+  function abrirJanela(url = '') {
+    janela = window.open(url, 'infinitepay', 'popup,width=480,height=760');
+    return janela;
+  }
+
+  function mostrarPago(dados: { negocio?: string; linkEnvio?: string }) {
+    clearInterval(vigia);
+    janela?.close();
+    document.getElementById('esperando')!.hidden = true;
+    const pago = document.getElementById('pago')!;
+    pago.hidden = false;
+    if (dados.negocio) pago.querySelector('[data-negocio]')!.textContent = dados.negocio;
+    const botao = pago.querySelector<HTMLAnchorElement>('[data-link-envio]')!;
+    if (dados.linkEnvio) botao.href = dados.linkEnvio;
+    else {
+      // Cookie de outro pedido (pagou de novo depois de "Voltar"): o link não sai aqui, então pede pelo WhatsApp.
+      botao.href = form.dataset.zapLink!;
+      botao.textContent = 'Pedir o link para montar o site';
+    }
+    if (!dialogo.open) dialogo.showModal();
+    try {
+      localStorage.removeItem(CHAVE);
+    } catch {}
+  }
+
+  async function conferir() {
+    if (!pedido) return;
+    try {
+      const r = await fetch(`/api/express-status?pedido=${encodeURIComponent(pedido)}`);
+      const dados = await r.json();
+      if (dados.pago) return mostrarPago(dados);
+    } catch {}
+    if (janela?.closed) statusTexto.textContent = 'A janela de pagamento foi fechada. Se já pagou, aguarde uns segundos; se não, abra de novo.';
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin || e.data?.tipo !== 'express' || e.data.pedido !== pedido) return;
+    if (e.data.pago) conferir();
+  });
+
+  function esperar() {
+    statusTexto.textContent = `Aguardando o pagamento de ${brl(valor())}…`;
+    dialogo.showModal();
+    clearInterval(vigia);
+    vigia = setInterval(conferir, 4000);
+  }
+
+  document.getElementById('reabrir')!.addEventListener('click', () => {
+    if (!abrirJanela(urlPagamento)) location.href = urlPagamento;
+    statusTexto.textContent = `Pagamento aberto de novo. Aguardando ${brl(valor())}…`;
+  });
+  document.getElementById('voltar')!.addEventListener('click', () => {
+    clearInterval(vigia);
+    janela?.close();
+    dialogo.close();
+  });
+  dialogo.addEventListener('close', () => clearInterval(vigia));
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (lotado) return;
-    if (!form.reportValidity()) return;
-    if (!aceite.checked) {
-      avisar('Para continuar, marque que leu e aceita os termos do Express.');
-      aceite.focus();
-      return;
-    }
-    const dados = new FormData(form);
+    retorno.hidden = true;
+    if (lotado || !validar()) return;
+    // A janela abre já no clique; abrir depois do fetch faz o navegador bloquear.
+    abrirJanela();
     pagar.disabled = true;
     pagar.textContent = 'Abrindo o pagamento…';
-    retorno.hidden = true;
     try {
       const resposta = await fetch('/api/express-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          negocio: dados.get('negocio'),
-          cidade: dados.get('cidade'),
-          whatsapp: dados.get('whatsapp'),
-          email: dados.get('email'),
+          negocio: negocio.value,
+          cidade: campo('cidade').value,
+          whatsapp: whatsapp.value,
+          email: email.value,
           maps: maps.checked,
           aceite: aceite.checked,
         }),
       });
-      const { url, erro } = await resposta.json();
-      if (!resposta.ok || !url) throw new Error(erro);
-      location.href = url;
+      const dados = await resposta.json();
+      if (!resposta.ok || !dados.url) throw new Error(dados.erro);
+      pedido = dados.pedido;
+      urlPagamento = dados.url;
+      if (!janela || janela.closed) {
+        location.href = urlPagamento; // janela bloqueada: segue na mesma aba e volta pela página de retorno
+        return;
+      }
+      janela.location.href = urlPagamento;
+      esperar();
     } catch (erro) {
+      janela?.close();
       avisar(erro instanceof Error && erro.message ? erro.message : 'Algo deu errado. Tente de novo.');
+    } finally {
       pagar.disabled = false;
       atualizar();
     }
@@ -457,6 +624,32 @@ const dadosEstruturados = {
   .fixo .btn { padding: 13px 18px; font-size: 15.5px; }
   .xp { padding-bottom: 72px; }
 
+  .autoridade { font-size: 15px; color: var(--muted); border-left: 3px solid var(--lima); padding-left: 12px; }
+  .autoridade a { color: var(--fg); font-weight: 600; }
+  .etapas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+  .etapas li[aria-current='step'] { color: var(--fg); font-weight: 700; }
+  .campo label small { font-weight: 400; color: var(--muted); }
+  .campo input:focus, .campo select:focus { border-color: var(--fg); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--lima) 60%, transparent); }
+  .dica { font-size: 13px; color: var(--muted); margin-top: -6px !important; }
+  .resumo { display: grid; gap: 8px; }
+  .depois { font-size: 13.5px; color: var(--muted); }
+  .garantia { font-size: 13px; color: var(--muted); text-align: center; }
+  .final { padding-block: 56px 72px; display: grid; gap: 14px; justify-items: start; max-width: 720px; }
+  .final h2 { font-size: clamp(26px, 4vw, 38px); line-height: 1.08; }
+  .final p { color: var(--muted); font-size: 17px; }
+  .final > span { font-size: 14px; color: var(--muted); }
+  .janela-pagamento { margin: auto; width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); border: 0; border-radius: 24px; padding: 24px; background: var(--color-papel); color: var(--fg); box-shadow: 0 30px 80px -20px rgba(14, 17, 22, 0.5); }
+  .janela-pagamento::backdrop { background: rgba(14, 17, 22, 0.55); backdrop-filter: blur(3px); }
+  #esperando { display: grid; gap: 16px; }
+  #esperando[hidden], #pago[hidden] { display: none; }
+  .janela-pagamento h2 { font-size: 26px; line-height: 1.1; }
+  .mudo { color: var(--muted); }
+  .aguardando { display: flex; align-items: center; gap: 12px; background: var(--soft); border-radius: 14px; padding: 14px 16px; font-size: 15px; }
+  .girando { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--fg) 15%, transparent); border-top-color: var(--accent-ink); animation: girar 0.9s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .acoes-dialogo { display: grid; gap: 10px; }
+  .acoes-dialogo .btn { width: 100%; }
+
   @media (max-width: 860px) {
     .grade-hero { grid-template-columns: 1fr; gap: 36px; padding-block: 24px 44px; }
     .celular { width: min(260px, 80%); }
@@ -475,5 +668,6 @@ const dadosEstruturados = {
   }
   @media (prefers-reduced-motion: reduce) {
     .celular, .btn, .fixo { transition: none; }
+    .girando { animation-duration: 3s; }
   }
 </style>

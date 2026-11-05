@@ -127,7 +127,7 @@ export function enviarResumo(env: Env, r: Awaited<ReturnType<typeof resumoDaSema
   );
 }
 
-export function avisarExpress(env: Env, p: { id: string; negocio: string; cidade: string; whatsapp: string; email: string; maps: number; valorCentavos: number }) {
+export function avisarExpress(env: Env, p: { id: string; negocio: string; cidade: string; whatsapp: string; email: string; maps: number; valorCentavos: number; codigo?: string | null }) {
   return enviar(
     env,
     `Express pago: ${p.negocio} (${p.cidade})${p.maps ? ' + Google Maps' : ''}`,
@@ -140,8 +140,26 @@ export function avisarExpress(env: Env, p: { id: string; negocio: string; cidade
       `E-mail: ${p.email}`,
       `Google Maps: ${p.maps ? 'sim' : 'não'}`,
       '',
-      'Próximo passo: chame no WhatsApp e peça fotos, serviços, preços, horário e o CPF ou CNPJ para registrar o domínio.',
-      'O prazo de 48 horas úteis conta a partir de quando tudo chegar.',
+      'O cliente já caiu na área de envio para mandar fotos, serviços, preços, horário e o domínio.',
+      p.codigo ? `Link da área (se ele pedir de novo): https://agilizalabs.com.br/express/enviar/${p.codigo}` : '',
+      'Você recebe outro e-mail quando ele terminar. O prazo de 48 horas úteis conta a partir daí.',
+    ].join('\n'),
+  );
+}
+
+export function avisarEnvioExpress(env: Env, p: { id: string; negocio: string; cidade: string; whatsapp: string }, d: { ramo: string; servicos: { nome: string }[]; fotos: string[]; dominios: string[] }) {
+  return enviar(
+    env,
+    `Express pronto para montar: ${p.negocio} (${p.cidade})`,
+    [
+      `Pedido: ${p.id}`,
+      `Ramo: ${d.ramo}`,
+      `Serviços: ${d.servicos.filter((s) => s.nome).length} · Fotos: ${d.fotos.length}`,
+      `Domínio pedido: ${d.dominios.filter(Boolean).map((x) => `${x}.com.br`).join(' ou ')}`,
+      `WhatsApp: https://wa.me/55${p.whatsapp}`,
+      '',
+      `O cliente terminou o envio. No vault, rode: /criar-sites-97 ${p.id}`,
+      'O prazo de 48 horas úteis começa agora.',
     ].join('\n'),
   );
 }
