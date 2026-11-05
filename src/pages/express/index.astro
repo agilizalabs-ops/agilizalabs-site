@@ -1,0 +1,479 @@
+---
+// Agiliza Express: página de venda direta para quem chega pelo anúncio do Instagram.
+// Preços em src/data/tiers.ts (express); vagas contadas no banco (pedidos pagos na semana).
+// Decisões em 01 Empresa/agiliza-express.md, no vault.
+import { env } from 'cloudflare:workers';
+import Layout from '../../layouts/Layout.astro';
+import { tiers, express, brl, brlCentavos } from '../../data/tiers';
+import { vagasRestantes, textoAceiteExpress } from '../../lib/express';
+
+export const prerender = false;
+
+let restantes: number = express.vagasPorSemana;
+try {
+  restantes = await vagasRestantes(env.DB);
+} catch (erro) {
+  console.error('Não deu para contar as vagas do Express.', erro);
+}
+const lotado = restantes === 0;
+const preenchidas = express.vagasPorSemana - restantes;
+
+const presenca = tiers.find((t) => t.id === 'presenca')!.formas.find((f) => f.nome === 'Com Cuidado')!;
+const institucional = tiers.find((t) => t.id === 'institucional')!.formas.find((f) => f.nome === 'Com Cuidado')!;
+const cidadesTexto = express.cidades.join(', ').replace(/, ([^,]*)$/, ' e $1');
+
+const menu = [
+  { href: '#como-funciona', texto: 'Como funciona' },
+  { href: '#modelos', texto: 'Modelos' },
+  { href: '#planos', texto: 'Planos' },
+  { href: '#duvidas', texto: 'Dúvidas' },
+];
+
+const duvidas = [
+  { p: 'Por que tão barato? Tem pegadinha?', r: 'O site sai de um modelo pronto, feito para o seu ramo. Você economiza no sob medida, não na qualidade: o site é rápido, preparado para o Google e o domínio fica no seu nome. O que está nesta página é o que você recebe.' },
+  { p: 'O que acontece depois que eu pago?', r: `Na mesma hora você vê a lista do que mandar pelo WhatsApp: fotos, serviços, preços, horário e o CPF ou CNPJ para o domínio. Assim que tudo chega, o prazo de ${express.prazoHorasUteis} horas úteis começa a contar.` },
+  { p: 'E se eu não gostar do resultado?', r: 'Você vê o site pronto no celular antes de ir ao ar e pede 1 rodada de ajustes. Ele só é publicado depois do seu OK.' },
+  { p: 'Posso desistir depois de pagar?', r: 'Pode. Em até 7 dias depois do pagamento, você desiste e recebe o valor de volta, sem precisar explicar.' },
+  { p: 'Quero mudar um preço depois. Como faço?', r: 'Cada alteração pequena custa R$ 80. Se você muda muito, o Agenda Cheia sai mais em conta: tem 1 alteração por mês inclusa.' },
+  { p: 'Posso cancelar a mensalidade?', r: `A fidelidade é de ${express.fidelidadeMeses} meses. Depois disso, é só avisar com 30 dias de antecedência, e o domínio continua no seu nome. Os detalhes estão nos termos.` },
+  { p: 'Atende a minha cidade?', r: `O Express atende ${cidadesTexto}.` },
+];
+
+const dadosEstruturados = {
+  '@context': 'https://schema.org',
+  '@type': 'Offer',
+  name: 'Agiliza Express: site profissional no ar em 48 horas',
+  price: express.setup.toFixed(2),
+  priceCurrency: 'BRL',
+  url: 'https://agilizalabs.com.br/express',
+  seller: { '@type': 'Organization', name: 'Agiliza Labs' },
+  areaServed: express.cidades.map((c) => ({ '@type': 'City', name: c })),
+};
+---
+
+<Layout
+  title={`Site profissional por ${brl(express.setup)} | Agiliza Express`}
+  description={`Seu site no ar em 48 horas por ${brl(express.setup)} + ${brlCentavos(express.mensal)}/mês, com domínio .com.br no seu nome. Para negócios de ${cidadesTexto}.`}
+  menu={menu}
+  semAssistente
+>
+  <script type="application/ld+json" set:html={JSON.stringify(dadosEstruturados)} />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500&family=DM+Sans:opsz,wght@9..40,400;9..40,700&display=swap" />
+  <div class="xp">
+    <section class="hero"><div class="conteudo grade-hero">
+      <div class="texto">
+        <div class="vagas-mini"><i class="ponto"></i><span>{lotado ? 'Vagas desta semana esgotadas' : `Restam ${restantes} de ${express.vagasPorSemana} vagas nesta semana`}</span></div>
+        <p class="eyebrow">{express.cidades.join(' · ')}</p>
+        <h1>Seu negócio com <mark>site profissional</mark> no ar em 48 horas.</h1>
+        <p class="sub">Você manda as fotos, os serviços e os preços. A gente monta, publica e mantém o site no ar. Sem reunião e sem enrolação.</p>
+        <div class="preco">
+          <div class="grande"><span>R$</span>{express.setup}</div>
+          <div class="mensal">+ <b>{brlCentavos(express.mensal)}/mês</b> de hospedagem<br />1ª mensalidade só 1 mês depois do site no ar</div>
+        </div>
+        <div class="acoes">
+          <a class="btn btn-lima" href="#checkout">Quero meu site por {brl(express.setup)}</a>
+          <a class="btn btn-borda" href="/express/exemplo">Ver um site pronto</a>
+        </div>
+        <div class="selos"><span>Domínio .com.br no seu nome</span><span>Feito para celular</span><span>Botão direto pro seu WhatsApp</span></div>
+      </div>
+
+      <a class="celular" href="/express/exemplo" aria-label="Abrir o site de exemplo de uma manicure">
+        <div class="tela">
+          <div class="mini-top"><span><i>Íris</i> Unhas</span><small>Agendar</small></div>
+          <div class="mini-foto"></div>
+          <div class="mini-txt">Unhas impecáveis por três semanas.</div>
+          <div class="mini-btn">Agendar pelo WhatsApp</div>
+          <div class="mini-lista">
+            <div><span>Esmaltação em gel</span><b>R$ 70</b></div>
+            <div><span>Pé e mão</span><b>R$ 60</b></div>
+          </div>
+        </div>
+        <span class="etiqueta">Um site Express fica assim →</span>
+      </a>
+    </div></section>
+
+    <section class="bloco"><div class="conteudo pilha">
+      <div class="titulo">
+        <p class="eyebrow">O que vem no Express</p>
+        <h2>Tudo que um site precisa para trazer cliente. Nada que você não vá usar.</h2>
+      </div>
+      <div class="inclui">
+        <ul class="lista-sim">
+          <li class="cab"><h3>Incluso nos {brl(express.setup)}</h3></li>
+          <li><div><b>Site de 1 página, montado no modelo do seu ramo</b><span>Serviços, preços, fotos, horário e dúvidas frequentes.</span></div></li>
+          <li><div><b>Domínio .com.br registrado no seu nome</b><span>seunegocio.com.br. Se um dia sair, o endereço é seu.</span></div></li>
+          <li><div><b>Botão de WhatsApp com mensagem pronta</b><span>A cliente toca e já chega dizendo o que quer.</span></div></li>
+          <li><div><b>Preparado para o Google</b><span>Título com serviço e cidade, dados para o Google e as IAs, rápido no celular.</span></div></li>
+          <li><div><b>Mapa e como chegar</b><span>Para quem procura um lugar "perto de mim".</span></div></li>
+          <li><div><b>1 revisão antes de publicar</b><span>Você vê o site pronto e pede o ajuste antes de ir ao ar.</span></div></li>
+        </ul>
+        <ul class="lista-nao">
+          <li class="cab"><h3>Fica de fora (e tudo bem)</h3></li>
+          <li><div><b>Layout sob medida</b><span>O Express usa um modelo pronto do seu ramo. Sob medida é o plano Agenda Cheia.</span></div></li>
+          <li><div><b>Google Maps</b><span>Opcional no pagamento, por mais {brl(express.maps)}.</span></div></li>
+          <li><div><b>Alterações todo mês</b><span>Mudou um preço? R$ 80 por alteração pequena.</span></div></li>
+        </ul>
+      </div>
+    </div></section>
+
+    <section class="bloco" id="como-funciona"><div class="conteudo pilha">
+      <div class="titulo">
+        <p class="eyebrow">Como funciona</p>
+        <h2>Do pagamento ao site no ar em 4 passos.</h2>
+      </div>
+      <ol class="passos">
+        <li><span class="tempo">Agora</span><b>Você garante a vaga</b><span>Pix ou cartão, aqui mesmo nesta página.</span></li>
+        <li><span class="tempo">5 minutos</span><b>Manda as informações</b><span>Fotos, serviços, preços e horário, pelo WhatsApp.</span></li>
+        <li><span class="tempo">Até {express.prazoHorasUteis} h úteis</span><b>Recebe o site pronto</b><span>Você olha no celular e pede 1 ajuste se quiser.</span></li>
+        <li><span class="tempo">Logo depois do OK</span><b>Seu site vai ao ar</b><span>Com o seu domínio .com.br, pronto para divulgar.</span></li>
+      </ol>
+    </div></section>
+
+    <section class="bloco" id="modelos"><div class="conteudo pilha">
+      <div class="titulo">
+        <p class="eyebrow">3 modelos</p>
+        <h2>Um modelo pensado para o seu ramo, com as suas fotos e as suas cores.</h2>
+      </div>
+      <div class="modelos">
+        <div class="modelo">
+          <div class="amostra m-beleza"><div class="t">Unhas impecáveis por três semanas.</div><div class="p"><i style="background:#b8476b"></i><i style="background:#34152a"></i><i style="background:#efd9d0"></i></div></div>
+          <div class="info"><b>Beleza e saúde</b><span>Manicure, sobrancelha, estética, cabelo, dentista, psicóloga, fisioterapia.</span><a href="/express/exemplo">Ver site de exemplo →</a></div>
+        </div>
+        <div class="modelo">
+          <div class="amostra m-servicos"><div class="t">Elétrica sem dor de cabeça.</div><div class="p"><i style="background:#f4d35e"></i><i style="background:#1d4a53"></i><i style="background:#ffffff"></i></div></div>
+          <div class="info"><b>Serviços e casa</b><span>Eletricista, encanador, pintor, diarista, mecânico, chaveiro, jardinagem.</span><em>Exemplo em breve</em></div>
+        </div>
+        <div class="modelo">
+          <div class="amostra m-comida"><div class="t">O xis mais pedido do bairro.</div><div class="p"><i style="background:#e4572e"></i><i style="background:#3a1a0e"></i><i style="background:#fff3df"></i></div></div>
+          <div class="info"><b>Comércio e comida</b><span>Lanchonete, padaria, confeitaria, loja de roupa, pet shop, floricultura.</span><em>Exemplo em breve</em></div>
+        </div>
+      </div>
+    </div></section>
+
+    <section class="bloco" id="planos"><div class="conteudo pilha">
+      <div class="titulo">
+        <p class="eyebrow">Planos da Agiliza</p>
+        <h2>Comece pelo Express. Suba quando o negócio pedir.</h2>
+        <p>Setup + mensalidade. O Express é a porta de entrada, com o mesmo cuidado dos planos maiores.</p>
+      </div>
+      <div class="escada">
+        <div class="degrau voce">
+          <span class="tag">Você está aqui</span>
+          <h3>Express</h3>
+          <div class="v">{brl(express.setup)}<small>+ {brlCentavos(express.mensal)}/mês</small></div>
+          <p>1 página em modelo pronto, no ar em 48 h.</p>
+        </div>
+        <a class="degrau" href="/#tipo-presenca">
+          <span class="tag">Autônomos</span>
+          <h3>Agenda Cheia</h3>
+          <div class="v">{brl(presenca.setup)}<small>+ {brl(presenca.mensal!)}/mês</small></div>
+          <p>Layout sob medida, Google Maps, atendente com IA e 1 alteração por mês.</p>
+        </a>
+        <a class="degrau" href="/#tipo-institucional">
+          <span class="tag">Empresas</span>
+          <h3>Institucional</h3>
+          <div class="v">{brl(institucional.setup)}<small>+ {brl(institucional.mensal!)}/mês</small></div>
+          <p>Até 5 páginas, formulário de orçamento e 3 alterações por mês.</p>
+        </a>
+        <div class="degrau">
+          <span class="tag">Sistemas e apps</span>
+          <h3>Sob Medida</h3>
+          <div class="v">R$ 6.000<small>a partir de</small></div>
+          <p>App ou sistema web com diagnóstico e protótipo antes de começar.</p>
+        </div>
+      </div>
+      <div class="credito"><strong>Seus {brl(express.setup)} voltam</strong><span>Subiu para o Agenda Cheia em até {express.creditoDias} dias? O valor do Express vira desconto no setup.</span></div>
+    </div></section>
+
+    <section class="bloco" id="checkout"><div class="conteudo grade-checkout">
+      <div class="lado">
+        <div class="titulo">
+          <p class="eyebrow">Garanta sua vaga</p>
+          <h2>Montamos {express.vagasPorSemana} sites Express por semana.</h2>
+          <p>É o número que dá para entregar em 48 horas com qualidade. Quando lota, as próximas vagas abrem na segunda-feira.</p>
+        </div>
+        <div class="medidor">
+          <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax={express.vagasPorSemana} aria-valuenow={preenchidas} aria-label="Vagas preenchidas nesta semana"><i style={`width:${Math.max(4, (preenchidas / express.vagasPorSemana) * 100)}%`}></i></div>
+          <span><b>{preenchidas} de {express.vagasPorSemana}</b> vagas preenchidas nesta semana</span>
+        </div>
+        <div class="selos"><span>Pix ou cartão</span><span>7 dias para desistir</span><span>Atendimento de gente da região</span></div>
+      </div>
+
+      <form class="pedido" id="pedido" novalidate data-setup={express.setup} data-maps={express.maps}>
+        <div class="linha"><span>Site Express (setup)</span><span>{brlCentavos(express.setup)}</span></div>
+        <label class="bump" for="maps">
+          <input type="checkbox" id="maps" name="maps" />
+          <div><b>Sim! Quero aparecer no Google Maps por + {brl(express.maps)}</b><span>Crio ou ajusto o seu Perfil da Empresa no Google: categoria, fotos, horário e link do site. Avulso custa <s>{brl(express.mapsAvulso)}</s>.</span></div>
+        </label>
+        <div class="campos">
+          <div class="campo largo"><label for="negocio">Nome do negócio</label><input id="negocio" name="negocio" type="text" required minlength="2" maxlength="80" placeholder="Ex.: Íris Unhas" autocomplete="organization" /></div>
+          <div class="campo"><label for="cidade">Cidade</label>
+            <select id="cidade" name="cidade">{express.cidades.map((c) => <option>{c}</option>)}</select></div>
+          <div class="campo"><label for="whatsapp">WhatsApp com DDD</label><input id="whatsapp" name="whatsapp" type="tel" required inputmode="tel" placeholder="(47) 9 0000-0000" autocomplete="tel" /></div>
+          <div class="campo largo"><label for="email">E-mail</label><input id="email" name="email" type="email" required placeholder="voce@email.com" autocomplete="email" /></div>
+        </div>
+        <label class="aceite" for="aceite">
+          <input type="checkbox" id="aceite" name="aceite" />
+          <span>Li e aceito os <a href="/express/termos" target="_blank">termos do Express</a>: mensalidade de {brlCentavos(express.mensal)} com fidelidade de {express.fidelidadeMeses} meses, primeira cobrança 1 mês depois do site no ar.</span>
+        </label>
+        <div class="total"><span>Total hoje</span><b id="total">{brlCentavos(express.setup)}</b></div>
+        <button class="btn btn-lima" id="pagar" type="submit" disabled={lotado}>{lotado ? 'Vagas da semana esgotadas' : `Pagar ${brlCentavos(express.setup)} com Pix ou cartão`}</button>
+        <p class="retorno" id="retorno" role="status" aria-live="polite" hidden></p>
+        <p class="pagamento">Pagamento processado pela InfinitePay. A Agiliza não vê nem guarda os dados do seu cartão.</p>
+      </form>
+    </div></section>
+
+    <section class="bloco" id="duvidas"><div class="conteudo pilha">
+      <div class="titulo"><p class="eyebrow">Dúvidas</p><h2>Antes de garantir a vaga</h2></div>
+      <div class="faq">
+        {duvidas.map((d) => <details><summary>{d.p}</summary><p>{d.r}</p></details>)}
+      </div>
+    </div></section>
+
+    <div class="fixo" id="fixo"><div class="conteudo">
+      <div class="r">Site Express<b>{brl(express.setup)} + {brlCentavos(express.mensal)}/mês</b></div>
+      <a class="btn btn-lima" href="#checkout">Quero o meu</a>
+    </div></div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('pedido') as HTMLFormElement;
+  const maps = form.querySelector<HTMLInputElement>('#maps')!;
+  const aceite = form.querySelector<HTMLInputElement>('#aceite')!;
+  const total = document.getElementById('total')!;
+  const pagar = document.getElementById('pagar') as HTMLButtonElement;
+  const retorno = document.getElementById('retorno')!;
+  const lotado = pagar.disabled;
+  const setup = Number(form.dataset.setup);
+  const valorMaps = Number(form.dataset.maps);
+  const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  function atualizar() {
+    if (lotado) return;
+    const v = setup + (maps.checked ? valorMaps : 0);
+    total.textContent = brl(v);
+    pagar.textContent = `Pagar ${brl(v)} com Pix ou cartão`;
+  }
+  maps.addEventListener('change', atualizar);
+
+  function avisar(texto: string) {
+    retorno.textContent = texto;
+    retorno.hidden = false;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (lotado) return;
+    if (!form.reportValidity()) return;
+    if (!aceite.checked) {
+      avisar('Para continuar, marque que leu e aceita os termos do Express.');
+      aceite.focus();
+      return;
+    }
+    const dados = new FormData(form);
+    pagar.disabled = true;
+    pagar.textContent = 'Abrindo o pagamento…';
+    retorno.hidden = true;
+    try {
+      const resposta = await fetch('/api/express-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          negocio: dados.get('negocio'),
+          cidade: dados.get('cidade'),
+          whatsapp: dados.get('whatsapp'),
+          email: dados.get('email'),
+          maps: maps.checked,
+          aceite: aceite.checked,
+        }),
+      });
+      const { url, erro } = await resposta.json();
+      if (!resposta.ok || !url) throw new Error(erro);
+      location.href = url;
+    } catch (erro) {
+      avisar(erro instanceof Error && erro.message ? erro.message : 'Algo deu errado. Tente de novo.');
+      pagar.disabled = false;
+      atualizar();
+    }
+  });
+
+  // A barra fixa some quando o checkout está na tela.
+  const fixo = document.getElementById('fixo')!;
+  new IntersectionObserver((es) => fixo.classList.toggle('some', es[0].isIntersecting), { threshold: 0.15 }).observe(document.getElementById('checkout')!);
+</script>
+
+<style>
+  .xp {
+    --tinta: var(--color-tinta);
+    --lima: var(--color-lima);
+    --fg: var(--color-tinta);
+    --muted: var(--color-grafite);
+    --card: #ffffff;
+    --line: #e1e2d9;
+    --accent-ink: var(--color-lima-escura);
+    --soft: var(--color-nevoa);
+    --b-serif: 'Bodoni Moda', Didot, 'Times New Roman', serif;
+    --b-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+  .xp h1, .xp h2, .xp h3 { margin: 0; }
+  .xp p { margin: 0; }
+
+  .eyebrow { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+  .vagas-mini { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--lima); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lima) 45%, transparent); }
+
+  .grade-hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; align-items: center; padding-block: 36px 64px; }
+  .hero .texto { min-width: 0; display: grid; gap: 20px; }
+  .hero h1 { font-size: clamp(34px, 6.2vw, 60px); line-height: 1.02; letter-spacing: -0.035em; }
+  .hero h1 mark { background: var(--lima); color: var(--tinta); padding: 0 0.12em; border-radius: 6px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .hero .sub { font-size: 18px; color: var(--muted); max-width: 46ch; }
+  .preco { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+  .preco .grande { font-size: 64px; font-weight: 700; letter-spacing: -0.04em; line-height: 0.9; font-variant-numeric: tabular-nums; }
+  .preco .grande span { font-size: 26px; vertical-align: top; margin-right: 4px; letter-spacing: 0; }
+  .preco .mensal { font-size: 15px; color: var(--muted); line-height: 1.35; padding-bottom: 4px; }
+  .preco .mensal b { color: var(--fg); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font: inherit; font-weight: 700; font-size: 17px; border: 0; border-radius: 14px; padding: 16px 22px; cursor: pointer; text-decoration: none; transition: transform 0.12s ease; }
+  .btn:active { transform: scale(0.98); }
+  .btn-lima { background: var(--lima); color: var(--tinta); }
+  .btn-lima:hover { background: #b5e01f; }
+  .btn-borda { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .selos { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--muted); }
+  .selos span::before { content: '✓'; color: var(--accent-ink); font-weight: 700; margin-right: 6px; }
+
+  .celular { justify-self: center; width: min(300px, 100%); aspect-ratio: 9 / 18.5; max-width: 100%; border-radius: 40px; background: var(--tinta); padding: 10px; box-shadow: 0 30px 60px -25px rgba(14, 17, 22, 0.45); position: relative; text-decoration: none; display: block; transform: rotate(2deg); transition: transform 0.3s ease; }
+  .celular:hover { transform: rotate(0deg) translateY(-4px); }
+  .celular .tela { width: 100%; height: 100%; border-radius: 31px; overflow: hidden; background: #f8efe9; color: #34152a; display: flex; flex-direction: column; }
+  .celular .etiqueta { position: absolute; left: -14px; bottom: 44px; background: var(--lima); color: var(--tinta); font-weight: 700; font-size: 13px; padding: 8px 12px; border-radius: 10px; transform: rotate(-4deg); box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.35); }
+  .mini-top { display: flex; justify-content: space-between; align-items: center; padding: 22px 16px 10px; font-family: var(--b-serif); font-size: 17px; }
+  .mini-top i { font-style: italic; color: #b8476b; }
+  .mini-top small { font-family: var(--b-sans); font-size: 9px; background: #34152a; color: #f8efe9; padding: 5px 8px; border-radius: 99px; }
+  .mini-foto { margin: 4px 12px; flex: 1; border-radius: 18px; background: radial-gradient(120% 80% at 30% 20%, #f3c9c0 0%, #d98b9a 45%, #8c3557 100%); }
+  .mini-txt { padding: 12px 16px 6px; font-family: var(--b-serif); font-size: 22px; line-height: 1.05; }
+  .mini-btn { margin: 8px 16px 12px; background: #b8476b; color: #fff; font-family: var(--b-sans); font-size: 11px; font-weight: 700; text-align: center; padding: 10px; border-radius: 99px; }
+  .mini-lista { margin: 0 16px 18px; font-family: var(--b-sans); font-size: 10px; display: grid; gap: 5px; color: #7a5a6b; }
+  .mini-lista div { display: flex; justify-content: space-between; border-bottom: 1px dotted #efd9d0; padding-bottom: 4px; }
+  .mini-lista b { color: #34152a; }
+
+  .bloco { border-top: 1px solid var(--line); scroll-margin-top: 4rem; }
+  .pilha { padding-block: 56px; display: grid; gap: 28px; }
+  .titulo { display: grid; gap: 10px; max-width: 640px; }
+  .titulo h2 { font-size: clamp(26px, 4vw, 38px); line-height: 1.08; }
+  .titulo p:not(.eyebrow) { color: var(--muted); font-size: 17px; }
+
+  .inclui { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  .lista-sim, .lista-nao { list-style: none; margin: 0; padding: 24px; border-radius: 20px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .lista-sim { background: var(--card); border: 1px solid var(--line); }
+  .lista-nao { background: var(--soft); }
+  .lista-sim h3, .lista-nao h3 { font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .lista-sim li, .lista-nao li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+  .lista-sim li.cab, .lista-nao li.cab { display: block; }
+  .lista-sim li:not(.cab)::before { content: ''; width: 22px; height: 22px; border-radius: 7px; background: var(--lima) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%230e1116' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; margin-top: 2px; }
+  .lista-nao li:not(.cab)::before { content: '–'; width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid #cfd1c6; display: grid; place-items: center; color: var(--muted); font-weight: 700; line-height: 1; margin-top: 2px; }
+  .lista-sim li b, .lista-nao li b { display: block; }
+  .lista-sim li span, .lista-nao li span { color: var(--muted); font-size: 15px; }
+
+  .passos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: passo; }
+  .passos li { counter-increment: passo; display: grid; gap: 8px; align-content: start; padding-top: 16px; border-top: 2px solid var(--fg); min-width: 0; }
+  .passos li::before { content: counter(passo); font-weight: 700; font-size: 13px; width: 28px; height: 28px; border-radius: 50%; background: var(--lima); color: var(--tinta); display: grid; place-items: center; }
+  .passos b { font-size: 18px; }
+  .passos span { color: var(--muted); font-size: 15px; }
+  .passos .tempo { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
+
+  .modelos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .modelo { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--card); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+  .amostra { aspect-ratio: 16 / 10; max-width: 100%; padding: 18px; display: grid; align-content: space-between; }
+  .amostra .t { font-size: 22px; line-height: 1.05; max-width: 12ch; }
+  .amostra .p { display: flex; gap: 6px; }
+  .amostra .p i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.6); }
+  .m-beleza { background: linear-gradient(150deg, #f8efe9 0 55%, #efd9d0 55%); color: #34152a; }
+  .m-beleza .t { font-family: var(--b-serif); }
+  .m-servicos { background: linear-gradient(150deg, #13343b 0 60%, #1d4a53 60%); color: #f4d35e; }
+  .m-servicos .t { font-weight: 700; text-transform: uppercase; font-size: 19px; }
+  .m-comida { background: linear-gradient(150deg, #fff3df 0 58%, #e4572e 58%); color: #3a1a0e; }
+  .m-comida .t { font-family: var(--b-sans); font-weight: 700; }
+  .modelo .info { padding: 16px 18px 18px; display: grid; gap: 6px; align-content: start; }
+  .modelo .info b { font-size: 17px; }
+  .modelo .info span { color: var(--muted); font-size: 14.5px; }
+  .modelo .info a { font-weight: 600; font-size: 14.5px; color: var(--accent-ink); margin-top: 4px; }
+  .modelo .info em { font-style: normal; font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+
+  .escada { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .degrau { border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 10px; align-content: start; background: var(--card); min-width: 0; text-decoration: none; color: inherit; }
+  a.degrau:hover { border-color: var(--fg); }
+  .degrau.voce { background: var(--tinta); color: #f1f2ea; border-color: var(--tinta); }
+  .degrau .tag { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .degrau.voce .tag { color: var(--lima); }
+  .degrau h3 { font-size: 20px; }
+  .degrau .v { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+  .degrau .v small { display: block; font-size: 14px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  .degrau.voce .v small, .degrau.voce p { color: #b9bfca; }
+  .degrau p { font-size: 14.5px; color: var(--muted); }
+  .credito { background: var(--soft); border-radius: 16px; padding: 16px 18px; display: flex; gap: 14px; align-items: center; font-size: 15.5px; }
+  .credito strong { background: var(--lima); color: var(--tinta); border-radius: 10px; padding: 6px 10px; white-space: nowrap; font-size: 14px; }
+
+  .grade-checkout { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; padding-block: 56px; }
+  .lado { display: grid; gap: 18px; min-width: 0; }
+  .medidor { display: grid; gap: 8px; }
+  .medidor .barra { height: 10px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .medidor .barra i { display: block; height: 100%; background: var(--lima); border-radius: 99px; }
+  .medidor span { font-size: 14.5px; color: var(--muted); }
+  .medidor b { color: var(--fg); }
+  .pedido { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; display: grid; gap: 16px; min-width: 0; }
+  .linha { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; }
+  .linha span:last-child { font-weight: 600; white-space: nowrap; }
+  .bump { border: 2px dashed var(--accent-ink); border-radius: 16px; padding: 14px; display: grid; grid-template-columns: 24px 1fr; gap: 12px; cursor: pointer; background: color-mix(in srgb, var(--lima) 14%, transparent); }
+  .bump input, .aceite input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--accent-ink); }
+  .bump b { display: block; font-size: 16px; }
+  .bump span { font-size: 14.5px; color: var(--muted); }
+  .campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .campo { display: grid; gap: 6px; min-width: 0; }
+  .campo.largo { grid-column: 1 / -1; }
+  .campo label { font-size: 14px; font-weight: 600; }
+  .campo input, .campo select { font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--color-papel); color: var(--fg); width: 100%; }
+  .aceite { display: grid; grid-template-columns: 24px 1fr; gap: 10px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .aceite a { color: var(--fg); text-decoration: underline; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 14px; }
+  .total b { font-size: 30px; letter-spacing: -0.03em; }
+  .pedido .btn { width: 100%; }
+  .pedido .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .retorno { font-size: 14.5px; background: #fff4e5; color: #6b3d00; border-radius: 12px; padding: 12px 14px; }
+  .pagamento { font-size: 12.5px; color: var(--muted); text-align: center; }
+
+  .faq { display: grid; gap: 10px; max-width: 760px; }
+  .faq details { border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+  .faq summary { cursor: pointer; padding: 16px 18px; font-weight: 600; font-size: 17px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; font-weight: 400; font-size: 22px; line-height: 1; color: var(--muted); }
+  .faq details[open] summary::after { content: '–'; }
+  .faq details p { padding: 0 18px 18px; color: var(--muted); }
+
+  .fixo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: color-mix(in srgb, var(--color-papel) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); transition: transform 0.25s ease; }
+  .fixo.some { transform: translateY(110%); }
+  .fixo .conteudo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 10px; }
+  .fixo .r { font-size: 13px; color: var(--muted); line-height: 1.25; }
+  .fixo .r b { display: block; font-size: 18px; color: var(--fg); }
+  .fixo .btn { padding: 13px 18px; font-size: 15.5px; }
+  .xp { padding-bottom: 72px; }
+
+  @media (max-width: 860px) {
+    .grade-hero { grid-template-columns: 1fr; gap: 36px; padding-block: 24px 44px; }
+    .celular { width: min(260px, 80%); }
+    .inclui, .grade-checkout { grid-template-columns: 1fr; }
+    .passos { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+    .modelos { grid-template-columns: 1fr; }
+    .modelo { grid-template-columns: 42% 1fr; grid-template-rows: none; }
+    .amostra { aspect-ratio: auto; min-height: 130px; }
+    .amostra .t { font-size: 17px; }
+    .escada { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .preco .grande { font-size: 56px; }
+    .escada, .campos { grid-template-columns: 1fr; }
+    .credito { flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .celular, .btn, .fixo { transition: none; }
+  }
+</style>

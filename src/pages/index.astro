@@ -4,7 +4,7 @@
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import { site, linkWhatsApp } from '../config';
-import { tiers, precoDeVitrine, precoDaForma, fundadores } from '../data/tiers';
+import { tiers, precoDeVitrine, precoDaForma, fundadores, express, brl, brlCentavos } from '../data/tiers';
 import { passos, seo, robo, duvidas } from '../data/conteudo';
 import novafmSite from '../assets/projetos/novafm-site.jpg';
 import portalSite from '../assets/projetos/portal-site.jpg';
@@ -41,6 +41,16 @@ const appTelas = [
       <p class="mt-6 max-w-xl text-lg text-nevoa-escura">
         Escolha o seu tipo de site. O preço está na tela, todo site sai com SEO profissional, e você vê o layout pronto antes de pagar o restante.
       </p>
+    </div>
+
+    <div class="conteudo pb-8">
+      <a href="/express" class="group flex flex-col gap-3 rounded-3xl bg-lima p-5 text-tinta sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <span>
+          <span class="block text-sm font-semibold uppercase tracking-wide">Novo · Agiliza Express</span>
+          <span class="mt-1 block text-xl font-bold leading-tight sm:text-2xl">Site profissional no ar em 48 horas por {brl(express.setup)} + {brlCentavos(express.mensal)}/mês</span>
+        </span>
+        <span class="inline-flex shrink-0 items-center gap-2 rounded-full bg-tinta px-5 py-3 font-medium text-papel">Ver o Express <span class="transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">→</span></span>
+      </a>
     </div>
 
     <div class="conteudo pb-16 sm:pb-24">

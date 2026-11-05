@@ -14,9 +14,11 @@ interface Props {
   /** Cabeçalho escuro, para páginas que abrem com uma seção escura. */
   escuro?: boolean;
   menu?: { href: string; texto: string }[];
+  /** Esconde o assistente e a agenda flutuantes (páginas de venda direta, como o Express). */
+  semAssistente?: boolean;
 }
 
-const { title, description, escuro = false } = Astro.props;
+const { title, description, escuro = false, semAssistente = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, site.url).href;
 // ?v= muda a cada nova og-image, para WhatsApp e redes buscarem a imagem de novo em vez de usar o cache
 const imagem = new URL('/og-image.png?v=3', site.url).href;
@@ -139,7 +141,7 @@ const menu = Astro.props.menu ?? [
       </div>
     </footer>
 
-    <ChatAgiliza />
-    <AgendaConversa />
+    {!semAssistente && <ChatAgiliza />}
+    {!semAssistente && <AgendaConversa />}
   </body>
 </html>

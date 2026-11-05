@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { site, linkWhatsApp } from '../../config';
+import { express, brlCentavos } from '../../data/tiers';
+---
+
+<Layout title="Termos do Agiliza Express | Agiliza Labs" description="Termos de contratação do Agiliza Express: o que entra, prazos, mensalidade, fidelidade e cancelamento." semAssistente>
+  <article class="conteudo max-w-3xl py-16 [&_h2]:mt-10 [&_h2]:text-2xl [&_p]:mt-3 [&_p]:text-grafite [&_li]:text-grafite [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
+    <h1 class="text-4xl sm:text-5xl">Termos do Agiliza Express</h1>
+    <p>Versão de 04/11/2026. Ao marcar "li e aceito" no pagamento, você contrata o Express nestas condições. Guardamos o aceite com data, hora, IP e e-mail.</p>
+
+    <h2>Quem contrata com quem</h2>
+    <p>Você (o contratante) contrata a {site.nome}, CNPJ {site.cnpj}, com sede em {site.cidade} - {site.uf}. O Express atende negócios de {express.cidades.join(', ').replace(/, ([^,]*)$/, ' e $1')}.</p>
+
+    <h2>O que entra</h2>
+    <ul>
+      <li>Site de 1 página montado a partir de um modelo pronto do seu ramo, com as suas fotos, serviços, preços, horário e contato.</li>
+      <li>Domínio .com.br registrado no seu nome (CPF ou CNPJ) e renovado enquanto a mensalidade estiver em dia.</li>
+      <li>Botão de WhatsApp com mensagem pronta, mapa, certificado de segurança (https) e preparação básica para o Google.</li>
+      <li>1 rodada de ajustes antes de publicar.</li>
+      <li>Se você marcar o Google Maps ({brlCentavos(express.maps)}): criação ou ajuste do seu Perfil da Empresa no Google. A verificação do Perfil depende do Google e pode pedir um passo seu.</li>
+    </ul>
+
+    <h2>O que não entra</h2>
+    <ul>
+      <li>Layout sob medida, mais páginas, loja, agenda on-line ou login.</li>
+      <li>Alterações depois da publicação. Cada alteração pequena (texto, preço, foto, horário) custa R$ 80.</li>
+      <li>Garantia de posição no Google ou de número de clientes.</li>
+    </ul>
+
+    <h2>Prazo</h2>
+    <p>O site fica pronto em até {express.prazoHorasUteis} horas úteis depois que recebermos tudo o que foi pedido no WhatsApp (fotos, serviços, preços, horário e o CPF ou CNPJ para o domínio). Você aprova antes de publicar.</p>
+
+    <h2>Valores</h2>
+    <ul>
+      <li>Setup: {brlCentavos(express.setup)}, pago no ato, por Pix ou cartão, pela InfinitePay.</li>
+      <li>Mensalidade: {brlCentavos(express.mensal)}, com a primeira cobrança 1 mês depois do site no ar, no dia que você escolher (5, 10, 15 ou 20). Cobre hospedagem, domínio, certificado e o site no ar.</li>
+      <li>Reajuste anual pelo IPCA.</li>
+    </ul>
+
+    <h2>Fidelidade e cancelamento</h2>
+    <p>A mensalidade tem fidelidade de {express.fidelidadeMeses} meses a partir da publicação. Se você cancelar antes disso, paga 50% das mensalidades que faltariam até completar os {express.fidelidadeMeses} meses. Depois da fidelidade, cancela quando quiser, com 30 dias de aviso. O domínio é seu: no cancelamento, passamos a gestão dele para você.</p>
+    <p>Mensalidade atrasada há mais de 30 dias pode tirar o site do ar até a regularização.</p>
+
+    <h2>Arrependimento</h2>
+    <p>Como a compra é pela internet, você pode desistir em até 7 dias depois do pagamento e recebe o valor de volta integralmente (Código de Defesa do Consumidor, art. 49).</p>
+
+    <h2>Subir de plano</h2>
+    <p>Se você contratar o plano Agenda Cheia em até {express.creditoDias} dias depois do pagamento do Express, os {brlCentavos(express.setup)} viram desconto no setup dele.</p>
+
+    <h2>Seus dados</h2>
+    <p>Usamos o nome do negócio, cidade, WhatsApp e e-mail para fazer o seu site, cobrar e falar com você. Detalhes na <a class="text-tinta underline" href="/privacidade">política de privacidade</a>.</p>
+
+    <h2>Dúvidas</h2>
+    <p>Fale com a gente pelo <a class="text-tinta underline" href={linkWhatsApp('Oi! Tenho uma dúvida sobre os termos do Express.')}>WhatsApp</a>{site.email && <> ou pelo e-mail {site.email}</>}. Foro da comarca de {site.cidade} - {site.uf}, sem prejuízo do foro do seu domicílio quando a lei garantir.</p>
+  </article>
+</Layout>

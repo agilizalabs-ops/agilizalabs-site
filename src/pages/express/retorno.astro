@@ -1,0 +1,66 @@
+---
+import { env } from 'cloudflare:workers';
+import Layout from '../../layouts/Layout.astro';
+import { InfinitePay } from '../../lib/infinitepay';
+import { lerPedido, marcarPago } from '../../lib/express';
+import { avisarExpress } from '../../lib/chat/avisos';
+import { linkWhatsApp } from '../../config';
+import { express } from '../../data/tiers';
+
+export const prerender = false;
+
+// A InfinitePay volta para cá. Confirmamos no servidor e conferimos o valor antes de dizer "pago".
+const parametros = Astro.url.searchParams;
+const id = parametros.get('order_nsu') ?? '';
+const transacao = parametros.get('transaction_nsu');
+const slug = parametros.get('slug');
+
+const pedido = id.startsWith('express-') ? await lerPedido(env.DB, id) : null;
+let pago = Boolean(pedido?.pagoEm);
+if (pedido && !pago && transacao && slug) {
+  try {
+    const pagamento = await new InfinitePay(env.INFINITEPAY_HANDLE).consultarPagamento({ pedido: id, transacao, slug });
+    pago = pagamento.pago && pagamento.valorCentavos >= pedido.valorCentavos;
+    if (pago && (await marcarPago(env.DB, id, transacao))) {
+      try {
+        await avisarExpress(env, pedido);
+      } catch (erro) {
+        console.error('Aviso do Express falhou; o pedido ficou marcado como pago.', erro);
+      }
+    }
+  } catch (erro) {
+    console.error(erro);
+  }
+}
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+
+const mensagem = pedido
+  ? `Oi! Paguei o Agiliza Express (pedido ${pedido.id}) para o ${pedido.negocio}. Vou mandar as fotos e as informações do site.`
+  : 'Oi! Fiz o pagamento do Agiliza Express e quero confirmar.';
+---
+
+<Layout title="Pagamento do Express | Agiliza Labs" description="Retorno do pagamento do Agiliza Express." semAssistente>
+  <section class="conteudo max-w-xl py-16">
+    {pago && pedido ? (
+      <>
+        <p class="text-sm font-semibold uppercase tracking-wide text-lima-escura">Pagamento confirmado ✓</p>
+        <h1 class="mt-2 text-4xl sm:text-5xl">Sua vaga está garantida!</h1>
+        <p class="mt-4 text-lg text-grafite">Agora é com a gente. Mande pelo WhatsApp o que vai no site do {pedido.negocio}. Leva uns 5 minutos.</p>
+        <ul class="mt-6 space-y-2 rounded-2xl bg-nevoa p-6">
+          <li>📸 De 3 a 8 fotos do seu trabalho ou do seu espaço</li>
+          <li>📋 Serviços ou produtos, com os preços</li>
+          <li>🕘 Horário de atendimento e endereço (ou bairros que atende)</li>
+          <li>🪪 CPF ou CNPJ, para registrar o domínio .com.br no seu nome</li>
+        </ul>
+        <a class="botao-principal mt-8 w-full text-lg" href={linkWhatsApp(mensagem)}>Mandar as informações no WhatsApp</a>
+        <p class="mt-4 text-sm text-grafite">O site fica pronto em até {express.prazoHorasUteis} horas úteis depois que tudo chegar. Você vê antes de publicar e pode pedir 1 ajuste.</p>
+      </>
+    ) : (
+      <>
+        <h1 class="text-4xl">Ainda não confirmamos o pagamento</h1>
+        <p class="mt-4 text-grafite">Se você pagou, pode levar alguns instantes. Atualize esta página ou fale com a gente.</p>
+        <a class="botao-principal mt-8" href={linkWhatsApp(mensagem)}>Falar no WhatsApp</a>
+      </>
+    )}
+  </section>
+</Layout>

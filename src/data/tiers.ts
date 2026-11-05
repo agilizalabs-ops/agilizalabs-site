@@ -163,3 +163,21 @@ export function precoDaForma(f: Pick<FormaDePagamento, 'setup' | 'setupAte' | 'm
 
 /** Programa Fundadores: 10% no setup e 3 meses de Cuidado grátis. */
 export const fundadores = { descontoSetup: 0.1, mesesDeCuidadoGratis: 3 };
+
+/** Agiliza Express: a oferta de entrada do anúncio no Instagram. Decisões em 01 Empresa/agiliza-express.md, no vault. */
+export const express = {
+  setup: 97,
+  mensal: 29.9,
+  fidelidadeMeses: 12,
+  /** Order bump do checkout: Google Perfil da Empresa criado ou ajustado. */
+  maps: 67,
+  mapsAvulso: 297,
+  vagasPorSemana: 10,
+  prazoHorasUteis: 48,
+  /** Os R$ 97 viram desconto no Agenda Cheia (Presença) se subir dentro deste prazo. */
+  creditoDias: 60,
+  cidades: ['São Bento do Sul', 'Rio Negrinho', 'Mafra', 'Campo Alegre', 'Joinville'],
+};
+
+/** Valor com centavos: R$ 29,90. */
+export const brlCentavos = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\s/, ' ');

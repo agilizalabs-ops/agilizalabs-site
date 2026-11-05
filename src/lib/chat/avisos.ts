@@ -126,3 +126,22 @@ export function enviarResumo(env: Env, r: Awaited<ReturnType<typeof resumoDaSema
     ].join('\n'),
   );
 }
+
+export function avisarExpress(env: Env, p: { id: string; negocio: string; cidade: string; whatsapp: string; email: string; maps: number; valorCentavos: number }) {
+  return enviar(
+    env,
+    `Express pago: ${p.negocio} (${p.cidade})${p.maps ? ' + Google Maps' : ''}`,
+    [
+      `Pedido: ${p.id}`,
+      `Valor pago: R$ ${(p.valorCentavos / 100).toFixed(2).replace('.', ',')}`,
+      `Negócio: ${p.negocio}`,
+      `Cidade: ${p.cidade}`,
+      `WhatsApp: ${p.whatsapp}  ->  https://wa.me/55${p.whatsapp}`,
+      `E-mail: ${p.email}`,
+      `Google Maps: ${p.maps ? 'sim' : 'não'}`,
+      '',
+      'Próximo passo: chame no WhatsApp e peça fotos, serviços, preços, horário e o CPF ou CNPJ para registrar o domínio.',
+      'O prazo de 48 horas úteis conta a partir de quando tudo chegar.',
+    ].join('\n'),
+  );
+}
