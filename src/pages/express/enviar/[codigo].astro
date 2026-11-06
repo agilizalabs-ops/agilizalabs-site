@@ -23,6 +23,7 @@ const exemplosFrase: Record<string, string> = {
   beleza: 'Ex.: Unhas impecáveis por três semanas.',
   servicos: 'Ex.: Elétrica residencial sem dor de cabeça.',
   comida: 'Ex.: O xis mais pedido do bairro.',
+  loja: 'Ex.: Móveis de madeira maciça direto da fábrica.',
 };
 const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116'];
 ---
@@ -42,7 +43,7 @@ const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116']
         <p>Em até {express.prazoHorasUteis} horas úteis você recebe no WhatsApp o link da prévia do seu site. Lá mesmo você aprova ou pede 1 ajuste.</p>
       </div>
     ) : (
-      <form id="envio" class="assistente" novalidate data-codigo={codigo} data-etapa={Math.min(envio?.etapa ?? 1, 5)} data-max-fotos={MAX_FOTOS}>
+      <form id="envio" class="assistente" novalidate data-ramo={dados?.ramo ?? ''} data-codigo={codigo} data-etapa={Math.min(envio?.etapa ?? 1, 5)} data-max-fotos={MAX_FOTOS}>
         <script type="application/json" id="dados-iniciais" set:html={JSON.stringify(dados).replace(/</g, '\\u003c')} />
 
         <header class="cabeca">
@@ -80,16 +81,17 @@ const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116']
 
         <!-- 2 -->
         <fieldset class="etapa" data-etapa="2" hidden>
-          <legend>Serviços e preços</legend>
-          <p class="ajuda">Coloque o que você mais vende. Preço pode ser "a partir de R$ 50" ou "sob consulta".</p>
+          <legend><span class="nao-loja">Serviços e preços</span><span class="so-loja">Produtos e preços</span></legend>
+          <p class="ajuda">Coloque o que você mais vende. Preço pode ser "a partir de R$ 50" ou "sob consulta".<span class="so-loja"> Na próxima etapa, mande uma foto de cada produto, na mesma ordem desta lista.</span></p>
           <div id="servicos" class="servicos"></div>
-          <button type="button" class="btn btn-borda pequeno" id="mais-servico">+ Adicionar serviço</button>
+          <button type="button" class="btn btn-borda pequeno" id="mais-servico">+ Adicionar <span class="nao-loja">serviço</span><span class="so-loja">produto</span></button>
         </fieldset>
 
         <!-- 3 -->
         <fieldset class="etapa" data-etapa="3" hidden>
           <legend>Fotos</legend>
-          <p class="ajuda">De 3 a {MAX_FOTOS} fotos reais do seu trabalho ou do seu espaço, com boa luz. A primeira vira a capa.</p>
+          <p class="ajuda nao-loja">De 3 a {MAX_FOTOS} fotos reais do seu trabalho ou do seu espaço, com boa luz. A primeira vira a capa.</p>
+          <p class="ajuda so-loja">Até {MAX_FOTOS} fotos: uma de cada produto, na ordem da lista, com fundo limpo e boa luz. Se tiver foto da fachada ou do ambiente da loja, mande primeiro: ela vira a capa.</p>
           <label class="soltar" for="arquivo-fotos">
             <input id="arquivo-fotos" type="file" accept="image/*" multiple />
             <b>Escolher fotos</b><span>da galeria ou da câmera</span>
@@ -235,7 +237,11 @@ const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116']
       el.addEventListener(el.type === 'radio' ? 'change' : 'input', () => {
         if (mascaras[nome]) el.value = mascaras[nome](el.value);
         dados[nome] = el.type === 'radio' ? el.value : el.value;
-        if (nome === 'ramo') exemploFrase();
+        if (nome === 'ramo') {
+          exemploFrase();
+          form.dataset.ramo = dados.ramo;
+          desenharServicos();
+        }
         if (nome === 'atendimento') mostrarEndereco();
         salvar();
       });
@@ -278,15 +284,17 @@ const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116']
     // ---------- serviços ----------
     const listaServicos = $('servicos');
     function desenharServicos() {
+      const loja = dados.ramo === 'loja';
+      const item = loja ? 'produto' : 'serviço';
       listaServicos.innerHTML = '';
       dados.servicos.forEach((s, i) => {
         const linha = document.createElement('div');
         linha.className = 'servico';
         linha.innerHTML = `
-          <input type="text" maxlength="80" placeholder="Serviço (ex.: Esmaltação em gel)" aria-label="Nome do serviço ${i + 1}" data-s="nome">
-          <input type="text" maxlength="30" placeholder="Preço (ex.: R$ 70)" aria-label="Preço do serviço ${i + 1}" data-s="preco" inputmode="text">
-          <input type="text" maxlength="160" placeholder="Detalhe opcional (ex.: dura 3 semanas · 1 h)" aria-label="Detalhe do serviço ${i + 1}" data-s="detalhe">
-          <button type="button" class="tirar" aria-label="Tirar o serviço ${i + 1}">×</button>`;
+          <input type="text" maxlength="80" placeholder="${loja ? 'Produto (ex.: Mesa de jantar 6 lugares)' : 'Serviço (ex.: Esmaltação em gel)'}" aria-label="Nome do ${item} ${i + 1}" data-s="nome">
+          <input type="text" maxlength="30" placeholder="Preço (ex.: R$ ${loja ? '1.890' : '70'})" aria-label="Preço do ${item} ${i + 1}" data-s="preco" inputmode="text">
+          <input type="text" maxlength="160" placeholder="Detalhe opcional (ex.: ${loja ? 'pinus maciço · 1,80 m' : 'dura 3 semanas · 1 h'})" aria-label="Detalhe do ${item} ${i + 1}" data-s="detalhe">
+          <button type="button" class="tirar" aria-label="Tirar o ${item} ${i + 1}">×</button>`;
         linha.querySelectorAll<HTMLInputElement>('[data-s]').forEach((el) => {
           const k = el.dataset.s as keyof Servico;
           el.value = s[k];
@@ -559,6 +567,8 @@ const cores = ['#b8476b', '#1d6b78', '#d9480f', '#2f6f3e', '#5b3fa0', '#0e1116']
   .etapa[hidden] { display: none; }
   legend { font-size: clamp(28px, 6vw, 38px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; padding: 0; margin-bottom: 4px; }
   .ajuda { color: var(--muted); }
+  .so-loja, [data-ramo='loja'] .nao-loja { display: none; }
+  [data-ramo='loja'] .so-loja { display: revert; }
   .campo { display: grid; gap: 7px; min-width: 0; }
   .campo[hidden] { display: none; }
   .campo label, .rotulo { font-size: 14.5px; font-weight: 600; }

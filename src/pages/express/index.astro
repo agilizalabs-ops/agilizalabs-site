@@ -140,7 +140,7 @@ const dadosEstruturados = {
 
     <section class="bloco" id="modelos"><div class="conteudo pilha">
       <div class="titulo">
-        <p class="eyebrow">3 modelos</p>
+        <p class="eyebrow">4 modelos</p>
         <h2>Um modelo pensado para o seu ramo, com as suas fotos e as suas cores.</h2>
       </div>
       <div class="modelos">
@@ -154,7 +154,11 @@ const dadosEstruturados = {
         </div>
         <div class="modelo">
           <div class="amostra m-comida"><div class="t">O xis mais pedido do bairro.</div><div class="p"><i style="background:#e4572e"></i><i style="background:#3a1a0e"></i><i style="background:#fff3df"></i></div></div>
-          <div class="info"><b>Comércio e comida</b><span>Lanchonete, padaria, confeitaria, loja de roupa, pet shop, floricultura.</span><em>Exemplo em breve</em></div>
+          <div class="info"><b>Comida e bebida</b><span>Lanchonete, padaria, confeitaria, açaí, marmitaria, cafeteria.</span><em>Exemplo em breve</em></div>
+        </div>
+        <div class="modelo">
+          <div class="amostra m-loja"><div class="t">Móveis direto da fábrica.</div><div class="p"><i style="background:#9f1239"></i><i style="background:#1e293b"></i><i style="background:#ece9e4"></i></div></div>
+          <div class="info"><b>Loja e vitrine</b><span>Roupas, acessórios, cosméticos, artesanato, móveis e decoração. Cada produto com foto, preço e botão para pedir no WhatsApp.</span><em>Exemplo em breve</em></div>
         </div>
       </div>
     </div></section>
@@ -563,7 +567,7 @@ const dadosEstruturados = {
   .passos span { color: var(--muted); font-size: 15px; }
   .passos .tempo { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); }
 
-  .modelos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
   .modelo { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--card); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
   .amostra { aspect-ratio: 16 / 10; max-width: 100%; padding: 18px; display: grid; align-content: space-between; }
   .amostra .t { font-size: 22px; line-height: 1.05; max-width: 12ch; }
@@ -575,6 +579,8 @@ const dadosEstruturados = {
   .m-servicos .t { font-weight: 700; text-transform: uppercase; font-size: 19px; }
   .m-comida { background: linear-gradient(150deg, #fff3df 0 58%, #e4572e 58%); color: #3a1a0e; }
   .m-comida .t { font-family: var(--b-sans); font-weight: 700; }
+  .m-loja { background: linear-gradient(150deg, #f8f7f4 0 58%, #ece9e4 58%); color: #1e293b; }
+  .m-loja .t { font-family: var(--b-sans); font-weight: 600; }
   .modelo .info { padding: 16px 18px 18px; display: grid; gap: 6px; align-content: start; }
   .modelo .info b { font-size: 17px; }
   .modelo .info span { color: var(--muted); font-size: 14.5px; }

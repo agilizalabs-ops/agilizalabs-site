@@ -4,7 +4,8 @@
 export const ramos = {
   beleza: 'Beleza e saúde',
   servicos: 'Serviços e casa',
-  comida: 'Comércio e comida',
+  comida: 'Comida e bebida',
+  loja: 'Loja e vitrine',
 } as const;
 export type Ramo = keyof typeof ramos;
 
@@ -126,7 +127,7 @@ export function faltando(d: DadosEnvio) {
   const f: string[] = [];
   if (!d.nome) f.push('o nome do negócio');
   if (!d.ramo) f.push('o ramo');
-  if (!d.servicos.some((s) => s.nome)) f.push('pelo menos 1 serviço');
+  if (!d.servicos.some((s) => s.nome)) f.push(d.ramo === 'loja' ? 'pelo menos 1 produto' : 'pelo menos 1 serviço');
   if (d.fotos.length < 1) f.push('pelo menos 1 foto');
   if (d.whatsapp.length < 10) f.push('o WhatsApp de atendimento');
   if (d.atendimento !== 'domicilio' && !d.endereco) f.push('o endereço');
